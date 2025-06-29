@@ -1,3 +1,5 @@
+'use client';
+
 import { AddToScene } from '../dom/Scene';
 
 export default function Puzzle() {
@@ -5,7 +7,7 @@ export default function Puzzle() {
     <AddToScene>
       <group>
         <mesh>
-          <boxGeometry args={[1, 1, 1]} />
+          <dodecahedronGeometry args={[1]} />
           <meshStandardMaterial color='orange' />
         </mesh>
       </group>
