@@ -40,7 +40,7 @@ export default function Home() {
             onMouseDown={() => setCurrentStep(index)}
             key={index}
             className={cn(
-              'cursor-pointer hover:shadow-lg duration-300 ease-in-out transition-all hover:bg-accent',
+              'cursor-pointer hover:shadow-lg duration-300 ease-in-out transition-all hover:bg-accent select-none',
               {
                 'ring-2 ring-blue-500': currentStep === index,
               }
