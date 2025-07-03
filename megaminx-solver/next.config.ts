@@ -1,5 +1,5 @@
-import type { NextConfig } from 'next';
+import type { NextConfig } from "next"
 
-const nextConfig: NextConfig = { transpilePackages: ['three'] };
+const nextConfig: NextConfig = { transpilePackages: ["three"] }
 
-export default nextConfig;
+export default nextConfig

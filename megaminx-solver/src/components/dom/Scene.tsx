@@ -1,12 +1,12 @@
-'use client';
+"use client"
 
-import tunnel from 'tunnel-rat';
+import tunnel from "tunnel-rat"
 
-export const r3f = tunnel();
+export const r3f = tunnel()
 
-import { Canvas } from '@react-three/fiber';
-import { Preload } from '@react-three/drei';
-import * as THREE from 'three';
+import { Canvas } from "@react-three/fiber"
+import { Preload } from "@react-three/drei"
+import * as THREE from "three"
 
 export default function Scene({
   ...props
@@ -15,13 +15,14 @@ export default function Scene({
   return (
     <Canvas
       {...props}
-      onCreated={(state) => (state.gl.toneMapping = THREE.AgXToneMapping)}>
+      onCreated={(state) => (state.gl.toneMapping = THREE.AgXToneMapping)}
+    >
       <r3f.Out />
       <Preload all />
     </Canvas>
-  );
+  )
 }
 
 export function AddToScene({ children }: { children: React.ReactNode }) {
-  return <r3f.In>{children}</r3f.In>;
+  return <r3f.In>{children}</r3f.In>
 }
