@@ -2,7 +2,8 @@
 
 import React, { useMemo } from "react"
 import { AddToScene } from "../dom/Scene"
-import { DoubleSide, Shape, ShapeGeometry } from "three"
+import { Shape, ShapeGeometry } from "three"
+import { PuzzleColor, PuzzleColorToHex } from "@/types/Puzzle"
 
 function TriangleShape() {
   const shape = new Shape()
@@ -17,7 +18,7 @@ function Triangle({
   color,
   ...props
 }: {
-  color: React.ComponentProps<"meshStandardMaterial">["color"]
+  color: PuzzleColor
 } & React.ComponentProps<"mesh">) {
   const triangleGeometry = useMemo(
     () => new ShapeGeometry([TriangleShape()]),
@@ -26,7 +27,7 @@ function Triangle({
 
   return (
     <mesh geometry={triangleGeometry} {...props}>
-      <meshStandardMaterial side={DoubleSide} color={color} />
+      <meshStandardMaterial color={PuzzleColorToHex[color]} />
     </mesh>
   )
 }
@@ -45,7 +46,7 @@ function Quadrilateral({
   color,
   ...props
 }: {
-  color: React.ComponentProps<"meshStandardMaterial">["color"]
+  color: PuzzleColor
 } & React.ComponentProps<"mesh">) {
   const quadrilateralGeometry = useMemo(
     () => new ShapeGeometry([QuadrilateralShape()]),
@@ -54,7 +55,7 @@ function Quadrilateral({
 
   return (
     <mesh geometry={quadrilateralGeometry} {...props}>
-      <meshStandardMaterial side={DoubleSide} color={color} />
+      <meshStandardMaterial color={PuzzleColorToHex[color]} />
     </mesh>
   )
 }
@@ -79,7 +80,7 @@ function Pentagon({
   color,
   ...props
 }: {
-  color: React.ComponentProps<"meshStandardMaterial">["color"]
+  color: PuzzleColor
 } & React.ComponentProps<"mesh">) {
   const pentagonGeometry = useMemo(
     () => new ShapeGeometry([PentagonShape()]),
@@ -88,7 +89,7 @@ function Pentagon({
 
   return (
     <mesh geometry={pentagonGeometry} {...props}>
-      <meshStandardMaterial side={DoubleSide} color={color} />
+      <meshStandardMaterial color={PuzzleColorToHex[color]} />
     </mesh>
   )
 }
@@ -97,7 +98,7 @@ function Face({
   color,
   ...props
 }: {
-  color: React.ComponentProps<"meshStandardMaterial">["color"]
+  color: PuzzleColor
 } & React.ComponentProps<"group">) {
   return (
     <group {...props}>
@@ -131,11 +132,66 @@ function Face({
 }
 
 export default function Puzzle() {
+  const r = 4.6
   return (
     <AddToScene>
       <group>
-        <Face color="white" position={[0, 0, 4]} rotation={[0, 0, 0]} />
-        <Face color="grey" position={[0, 0, -4]} rotation={[0, Math.PI, 0]} />
+        <Face
+          color={PuzzleColor.WHITE}
+          position={[0, 0, r]}
+          rotation={[0, 0, 0]}
+        />
+        {(
+          [
+            PuzzleColor.RED,
+            PuzzleColor.BLUE,
+            PuzzleColor.YELLOW,
+            PuzzleColor.PURPLE,
+            PuzzleColor.GREEN,
+          ] satisfies PuzzleColor[]
+        ).map((color, i) => (
+          <group key={i} rotation={[0, 0, ((i * 4 - 1) * Math.PI) / 10]}>
+            <group rotation={[0, (7 / 20) * Math.PI, 0]}>
+              <group rotation={[0, 0, -Math.PI / 10]}>
+                <Face color={color} position={[0, 0, r]} rotation={[0, 0, 0]} />
+              </group>
+            </group>
+          </group>
+        ))}
+
+        <group rotation={[0, Math.PI, Math.PI / 5]}>
+          <Face color={PuzzleColor.GREY} position={[0, 0, r]} />
+          {(
+            [
+              PuzzleColor.ORANGE,
+              PuzzleColor.LIME,
+              PuzzleColor.PINK,
+              PuzzleColor.BEIGE,
+              PuzzleColor.LIGHTBLUE,
+            ] satisfies PuzzleColor[]
+          ).map((color, i) => (
+            <group key={i} rotation={[0, 0, ((i * 4 - 1) * Math.PI) / 10]}>
+              <group rotation={[0, (7 / 20) * Math.PI, 0]}>
+                <group rotation={[0, 0, -Math.PI / 10]}>
+                  <Face
+                    color={color}
+                    position={[0, 0, r]}
+                    rotation={[0, 0, 0]}
+                  />
+                </group>
+              </group>
+            </group>
+          ))}
+        </group>
+
+        {/* {positions.map((position, i) => (
+          <Face
+            key={i}
+            color={`hsl(${(i * 72) % 360}, 100%, 50%)`}
+            position={position}
+            rotation={[0, angle, i * angle + Math.PI / 2]}
+          />
+        ))} */}
       </group>
     </AddToScene>
   )

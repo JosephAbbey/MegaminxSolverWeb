@@ -53,10 +53,11 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <p>
-                Lorem ipsum dolor sit amet consectetur, adipisicing elit. Rerum,
-                omnis dicta sapiente error rem ab, corrupti nemo consectetur
-                reprehenderit cumque quidem nam iusto quam ipsum soluta
-                blanditiis ad eius distinctio.
+                Lorem ipsum dolor sit amet consectetur, adipisicing elit.
+                Pariatur officiis asperiores nam, necessitatibus perspiciatis
+                voluptatibus, quasi voluptates porro consequuntur quia laborum
+                libero beatae aliquam fugiat, sequi reprehenderit quidem
+                aspernatur. Adipisci.
               </p>
             </CardContent>
           </Card>
