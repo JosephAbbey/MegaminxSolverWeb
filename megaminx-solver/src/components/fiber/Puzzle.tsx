@@ -1,9 +1,17 @@
 "use client"
 
+const DEBUG = true
+
 import React, { useMemo } from "react"
-import { AddToScene } from "../dom/Scene"
-import { Shape, ShapeGeometry } from "three"
-import { PuzzleColor, PuzzleColorToHex } from "@/types/Puzzle"
+import { Plane, Shape, ShapeGeometry, Vector3 } from "three"
+import {
+  Puzzle,
+  PuzzleColor,
+  PuzzleColorToHex,
+  PuzzleFace,
+} from "@/types/Puzzle"
+import { Line, Text } from "@react-three/drei"
+import { Clip, ClippingStandardMaterial } from "@/components/fiber/Clipping"
 
 function TriangleShape() {
   const shape = new Shape()
@@ -15,9 +23,11 @@ function TriangleShape() {
 }
 
 function Triangle({
+  index,
   color,
   ...props
 }: {
+  index: number
   color: PuzzleColor
 } & React.ComponentProps<"mesh">) {
   const triangleGeometry = useMemo(
@@ -27,7 +37,13 @@ function Triangle({
 
   return (
     <mesh geometry={triangleGeometry} {...props}>
-      <meshStandardMaterial color={PuzzleColorToHex[color]} />
+      {DEBUG && (
+        <Text position={[0, -0.3, 0.1]}>
+          {index}
+          <ClippingStandardMaterial color="black" />
+        </Text>
+      )}
+      <ClippingStandardMaterial color={PuzzleColorToHex[color]} />
     </mesh>
   )
 }
@@ -43,9 +59,11 @@ function QuadrilateralShape() {
 }
 
 function Quadrilateral({
+  index,
   color,
   ...props
 }: {
+  index: number
   color: PuzzleColor
 } & React.ComponentProps<"mesh">) {
   const quadrilateralGeometry = useMemo(
@@ -55,7 +73,13 @@ function Quadrilateral({
 
   return (
     <mesh geometry={quadrilateralGeometry} {...props}>
-      <meshStandardMaterial color={PuzzleColorToHex[color]} />
+      {DEBUG && (
+        <Text position={[0.5, -0.5, 0.1]}>
+          {index}
+          <ClippingStandardMaterial color="black" />
+        </Text>
+      )}
+      <ClippingStandardMaterial color={PuzzleColorToHex[color]} />
     </mesh>
   )
 }
@@ -89,40 +113,50 @@ function Pentagon({
 
   return (
     <mesh geometry={pentagonGeometry} {...props}>
-      <meshStandardMaterial color={PuzzleColorToHex[color]} />
+      <ClippingStandardMaterial color={PuzzleColorToHex[color]} />
     </mesh>
   )
 }
 
 function Face({
-  color,
+  index,
+  face,
   ...props
 }: {
-  color: PuzzleColor
+  index: number
+  face: PuzzleFace
 } & React.ComponentProps<"group">) {
   return (
     <group {...props}>
-      <Pentagon color={color} />
-      {[0, 1, 2, 3, 4].map((i) => (
+      {DEBUG && (
+        <Text position={[0, 0, 0.1]}>
+          {index}
+          <ClippingStandardMaterial color="black" />
+        </Text>
+      )}
+      <Pentagon color={face.color} />
+      {face.edges.map((edge, i) => (
         <Triangle
           key={i}
-          color={color}
-          rotation={[0, 0, ((i * 4 + 2) / 10) * Math.PI]}
+          index={i}
+          color={edge}
+          rotation={[0, 0, ((i * 4 + 6) / 10) * Math.PI]}
           position={[
-            1.825 * Math.cos(((i * 4 + 7) / 10) * Math.PI),
-            1.825 * Math.sin(((i * 4 + 7) / 10) * Math.PI),
+            1.825 * Math.cos(((i * 4 + 11) / 10) * Math.PI),
+            1.825 * Math.sin(((i * 4 + 11) / 10) * Math.PI),
             0,
           ]}
         />
       ))}
-      {[0, 1, 2, 3, 4].map((i) => (
+      {face.corners.map((corner, i) => (
         <Quadrilateral
           key={i}
-          color={color}
-          rotation={[0, 0, ((i * 4 + 4) / 10) * Math.PI]}
+          index={i}
+          color={corner}
+          rotation={[0, 0, ((i * 4 + 12) / 10) * Math.PI]}
           position={[
-            1.3 * Math.cos(((i * 4 + 1) / 10) * Math.PI),
-            1.3 * Math.sin(((i * 4 + 1) / 10) * Math.PI),
+            1.3 * Math.cos(((i * 4 + 9) / 10) * Math.PI),
+            1.3 * Math.sin(((i * 4 + 9) / 10) * Math.PI),
             0,
           ]}
         />
@@ -131,68 +165,87 @@ function Face({
   )
 }
 
-export default function Puzzle() {
+export default function StaticPuzzle({
+  puzzle,
+  hiddenFace,
+}: {
+  puzzle: Puzzle
+  hiddenFace?: number | null
+}) {
   const r = 4.6
+  const cr = r - 1.7
+
+  // generate a plane to clip the hidden face
+  const clipPlane = useMemo(() => {
+    if (hiddenFace === null || hiddenFace === undefined) return null
+    if (hiddenFace == 0) {
+      return new Plane(new Vector3(0, 0, -1), cr)
+    } else if (hiddenFace < 6) {
+      let vector = new Vector3(0, 0, -1)
+      vector = vector.applyAxisAngle(new Vector3(0, 1, 0), (7 / 20) * Math.PI)
+      vector = vector.applyAxisAngle(
+        new Vector3(0, 0, 1),
+        ((hiddenFace * 4 - 1) * Math.PI) / 10,
+      )
+
+      return new Plane(vector, cr)
+    } else if (hiddenFace < 11) {
+      let vector = new Vector3(0, 0, 1)
+      vector = vector.applyAxisAngle(new Vector3(0, 1, 0), (7 / 20) * Math.PI)
+      vector = vector.applyAxisAngle(
+        new Vector3(0, 0, 1),
+        ((-hiddenFace * 4 + 7) * Math.PI) / 10,
+      )
+      return new Plane(vector, cr)
+    } else {
+      return new Plane(new Vector3(0, 0, 1), cr)
+    }
+  }, [hiddenFace, cr])
+
   return (
-    <AddToScene>
-      <group>
-        <Face
-          color={PuzzleColor.WHITE}
-          position={[0, 0, r]}
-          rotation={[0, 0, 0]}
-        />
-        {(
-          [
-            PuzzleColor.RED,
-            PuzzleColor.BLUE,
-            PuzzleColor.YELLOW,
-            PuzzleColor.PURPLE,
-            PuzzleColor.GREEN,
-          ] satisfies PuzzleColor[]
-        ).map((color, i) => (
-          <group key={i} rotation={[0, 0, ((i * 4 - 1) * Math.PI) / 10]}>
+    <Clip plane={clipPlane}>
+      <Face
+        index={0}
+        face={puzzle.faces[0]}
+        position={[0, 0, r]}
+        rotation={[0, 0, (4 * Math.PI) / 5]}
+      />
+      {puzzle.faces.slice(1, 6).map((face, i) => (
+        <group key={i} rotation={[0, 0, ((i * 4 - 1) * Math.PI) / 10]}>
+          <group rotation={[0, (7 / 20) * Math.PI, 0]}>
+            <group rotation={[0, 0, -Math.PI / 10]}>
+              <Face
+                index={i + 1}
+                face={face}
+                position={[0, 0, r]}
+                rotation={[0, 0, 0]}
+              />
+            </group>
+          </group>
+        </group>
+      ))}
+      <group rotation={[0, Math.PI, Math.PI / 5]}>
+        {puzzle.faces.slice(6, 11).map((face, i) => (
+          <group key={i} rotation={[0, 0, ((-i * 4 + 7) * Math.PI) / 10]}>
             <group rotation={[0, (7 / 20) * Math.PI, 0]}>
               <group rotation={[0, 0, -Math.PI / 10]}>
-                <Face color={color} position={[0, 0, r]} rotation={[0, 0, 0]} />
+                <Face
+                  index={i + 6}
+                  face={face}
+                  position={[0, 0, r]}
+                  rotation={[0, 0, 0]}
+                />
               </group>
             </group>
           </group>
         ))}
-
-        <group rotation={[0, Math.PI, Math.PI / 5]}>
-          <Face color={PuzzleColor.GREY} position={[0, 0, r]} />
-          {(
-            [
-              PuzzleColor.ORANGE,
-              PuzzleColor.LIME,
-              PuzzleColor.PINK,
-              PuzzleColor.BEIGE,
-              PuzzleColor.LIGHTBLUE,
-            ] satisfies PuzzleColor[]
-          ).map((color, i) => (
-            <group key={i} rotation={[0, 0, ((i * 4 - 1) * Math.PI) / 10]}>
-              <group rotation={[0, (7 / 20) * Math.PI, 0]}>
-                <group rotation={[0, 0, -Math.PI / 10]}>
-                  <Face
-                    color={color}
-                    position={[0, 0, r]}
-                    rotation={[0, 0, 0]}
-                  />
-                </group>
-              </group>
-            </group>
-          ))}
-        </group>
-
-        {/* {positions.map((position, i) => (
-          <Face
-            key={i}
-            color={`hsl(${(i * 72) % 360}, 100%, 50%)`}
-            position={position}
-            rotation={[0, angle, i * angle + Math.PI / 2]}
-          />
-        ))} */}
+        <Face
+          index={11}
+          face={puzzle.faces[11]}
+          position={[0, 0, r]}
+          rotation={[0, 0, -(2 * Math.PI) / 5]}
+        />
       </group>
-    </AddToScene>
+    </Clip>
   )
 }
