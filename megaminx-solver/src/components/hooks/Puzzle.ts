@@ -1,16 +1,18 @@
-import { Puzzle } from "@/types/Puzzle"
+import { Puzzle, Turn } from "@/types/Puzzle"
 import { useState } from "react"
 
-export default function usePuzzle(puzzle: Puzzle): {
-  puzzle: Puzzle
-  setPuzzle: (puzzle: Puzzle) => void
-  rotateFace: (index: number, anticlockwise: boolean) => void
-} {
+interface PuzzleHook {
+  state: Puzzle
+  setState: (puzzle: Puzzle) => void
+  turn: (t: Turn) => void
+}
+
+export default function usePuzzle(puzzle: Puzzle): PuzzleHook {
   const [state, setState] = useState(puzzle)
 
-  const rotateFace = (index: number, anticlockwise: boolean) => {
-    setState(state.rotateFace(index, anticlockwise))
+  const turn = (t: Turn) => {
+    setState(state.turn(t))
   }
 
-  return { puzzle: state, setPuzzle: setState, rotateFace }
+  return { state, setState, turn }
 }

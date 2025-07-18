@@ -1,17 +1,22 @@
 "use client"
 
-const DEBUG = true
+const DEBUG = false
 
-import React, { useMemo } from "react"
-import { Plane, Shape, ShapeGeometry, Vector3 } from "three"
+import { ComponentProps, ReactNode, RefObject, useMemo } from "react"
+import { Group, Plane, Shape, ShapeGeometry, Vector3 } from "three"
 import {
+  PuzzleEdgedFace,
   Puzzle,
   PuzzleColor,
   PuzzleColorToHex,
   PuzzleFace,
+  Turn,
+  ANTICLOCKWISE,
 } from "@/types/Puzzle"
-import { Line, Text } from "@react-three/drei"
+import { Text } from "@react-three/drei"
 import { Clip, ClippingStandardMaterial } from "@/components/fiber/Clipping"
+import { Easing, Tween } from "@tweenjs/tween.js"
+import { group } from "@/components/fiber/TweenGroup"
 
 function TriangleShape() {
   const shape = new Shape()
@@ -27,9 +32,9 @@ function Triangle({
   color,
   ...props
 }: {
-  index: number
+  index?: number
   color: PuzzleColor
-} & React.ComponentProps<"mesh">) {
+} & ComponentProps<"mesh">) {
   const triangleGeometry = useMemo(
     () => new ShapeGeometry([TriangleShape()]),
     [],
@@ -63,9 +68,9 @@ function Quadrilateral({
   color,
   ...props
 }: {
-  index: number
+  index?: number
   color: PuzzleColor
-} & React.ComponentProps<"mesh">) {
+} & ComponentProps<"mesh">) {
   const quadrilateralGeometry = useMemo(
     () => new ShapeGeometry([QuadrilateralShape()]),
     [],
@@ -105,7 +110,7 @@ function Pentagon({
   ...props
 }: {
   color: PuzzleColor
-} & React.ComponentProps<"mesh">) {
+} & ComponentProps<"mesh">) {
   const pentagonGeometry = useMemo(
     () => new ShapeGeometry([PentagonShape()]),
     [],
@@ -123,9 +128,9 @@ function Face({
   face,
   ...props
 }: {
-  index: number
+  index?: number
   face: PuzzleFace
-} & React.ComponentProps<"group">) {
+} & ComponentProps<"group">) {
   return (
     <group {...props}>
       {DEBUG && (
@@ -165,16 +170,16 @@ function Face({
   )
 }
 
-export default function StaticPuzzle({
+const r = 4.6
+const cr = r - 1.7
+
+export function StaticPuzzle({
   puzzle,
   hiddenFace,
 }: {
   puzzle: Puzzle
   hiddenFace?: number | null
 }) {
-  const r = 4.6
-  const cr = r - 1.7
-
   // generate a plane to clip the hidden face
   const clipPlane = useMemo(() => {
     if (hiddenFace === null || hiddenFace === undefined) return null
@@ -185,7 +190,7 @@ export default function StaticPuzzle({
       vector = vector.applyAxisAngle(new Vector3(0, 1, 0), (7 / 20) * Math.PI)
       vector = vector.applyAxisAngle(
         new Vector3(0, 0, 1),
-        ((hiddenFace * 4 - 1) * Math.PI) / 10,
+        ((hiddenFace * 4 - 5) * Math.PI) / 10,
       )
 
       return new Plane(vector, cr)
@@ -194,13 +199,13 @@ export default function StaticPuzzle({
       vector = vector.applyAxisAngle(new Vector3(0, 1, 0), (7 / 20) * Math.PI)
       vector = vector.applyAxisAngle(
         new Vector3(0, 0, 1),
-        ((-hiddenFace * 4 + 7) * Math.PI) / 10,
+        ((hiddenFace * 4 + 7) * Math.PI) / 10,
       )
       return new Plane(vector, cr)
     } else {
       return new Plane(new Vector3(0, 0, 1), cr)
     }
-  }, [hiddenFace, cr])
+  }, [hiddenFace])
 
   return (
     <Clip plane={clipPlane}>
@@ -247,5 +252,155 @@ export default function StaticPuzzle({
         />
       </group>
     </Clip>
+  )
+}
+
+export function EdgedFace({ face }: { face: PuzzleEdgedFace }) {
+  return (
+    <>
+      <group position={[0, 0, 4.6]} rotation={[0, 0, (4 * Math.PI) / 5]}>
+        <Face face={face.face} />
+      </group>
+      {face.edges.map((edge, i) => (
+        <group key={i} rotation={[0, 0, ((i * 4 - 1) * Math.PI) / 10]}>
+          <group rotation={[0, (7 / 20) * Math.PI, 0]}>
+            <group rotation={[0, 0, -Math.PI / 10]}>
+              <group position={[0, 0, r]}>
+                <Quadrilateral
+                  color={edge[0]}
+                  rotation={[0, 0, (12 / 10) * Math.PI]}
+                  position={[
+                    1.3 * Math.cos((9 / 10) * Math.PI),
+                    1.3 * Math.sin((9 / 10) * Math.PI),
+                    0,
+                  ]}
+                />
+                <Triangle
+                  color={edge[1]}
+                  rotation={[0, 0, (6 / 10) * Math.PI]}
+                  position={[
+                    1.825 * Math.cos((11 / 10) * Math.PI),
+                    1.825 * Math.sin((11 / 10) * Math.PI),
+                    0,
+                  ]}
+                />
+                <Quadrilateral
+                  color={edge[2]}
+                  rotation={[0, 0, (16 / 10) * Math.PI]}
+                  position={[
+                    1.3 * Math.cos((13 / 10) * Math.PI),
+                    1.3 * Math.sin((13 / 10) * Math.PI),
+                    0,
+                  ]}
+                />
+              </group>
+            </group>
+          </group>
+        </group>
+      ))}
+    </>
+  )
+}
+
+export function Turning({
+  children,
+  turningRef: ref,
+}: {
+  children: ReactNode
+  turningRef: RefObject<Group>
+}) {
+  // const anticlockwise = false
+  // const ref = useRef<Group>(null!)
+  // useFrame(({ clock }) => {
+  //   ref.current.rotation.z = anticlockwise
+  //     ? -clock.elapsedTime
+  //     : clock.elapsedTime
+  // })
+  return <group ref={ref}>{children}</group>
+}
+
+export const turnRef = (ref: RefObject<Group>, turn: Turn) =>
+  new Promise<void>((resolve) => {
+    console.log("turnRef", turn, ref.current, ref.current.rotation)
+    ref.current.rotation.set(0, 0, 0)
+    new Tween(ref.current.rotation, group)
+      .to(
+        {
+          x: 0,
+          y: 0,
+          z:
+            turn.direction == ANTICLOCKWISE
+              ? (2 * Math.PI) / 5
+              : -(2 * Math.PI) / 5,
+        },
+        500,
+      )
+      .easing(Easing.Cubic.InOut)
+      .onComplete(() => resolve())
+      .start()
+  })
+
+export function RotateFace({
+  children,
+  index,
+}: {
+  children: ReactNode
+  index: number
+}) {
+  // everything has the same number of groups, to ensure that when rerendering,
+  // the same objects are just reused.
+  if (index == 0) {
+    return (
+      <group>
+        <group>
+          <group>
+            <group>{children}</group>
+          </group>
+        </group>
+      </group>
+    )
+  }
+  if (index < 6) {
+    return (
+      <group rotation={[0, 0, ((index * 4 - 5) * Math.PI) / 10]}>
+        <group rotation={[0, (7 / 20) * Math.PI, 0]}>
+          <group rotation={[0, 0, -Math.PI / 10]}>
+            <group rotation={[0, 0, -(4 * Math.PI) / 5]}>{children}</group>
+          </group>
+        </group>
+      </group>
+    )
+  }
+  if (index < 11) {
+    return (
+      <group rotation={[0, Math.PI, Math.PI / 5]}>
+        <group rotation={[0, 0, ((-index * 4 + 11) * Math.PI) / 10]}>
+          <group rotation={[0, (7 / 20) * Math.PI, 0]}>
+            <group rotation={[0, 0, -(9 * Math.PI) / 10]}>{children}</group>
+          </group>
+        </group>
+      </group>
+    )
+  }
+  if (index == 11) {
+    return (
+      <group rotation={[0, Math.PI, Math.PI / 5]}>
+        <group rotation={[0, 0, (2 * Math.PI) / 5]}>
+          <group>
+            <group>{children}</group>
+          </group>
+        </group>
+      </group>
+    )
+  }
+
+  return (
+    <group>
+      <group>
+        <group>
+          <group>{children}</group>
+        </group>
+      </group>
+    </group>
   )
 }

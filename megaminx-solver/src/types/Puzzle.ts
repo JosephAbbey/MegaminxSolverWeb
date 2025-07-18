@@ -34,6 +34,8 @@ export const PuzzleColorToHex: Record<PuzzleColor, string> = {
   GREY: "#808080",
 }
 
+// Adjacency matrix for edges that are adjacent to each face in clockwise
+// order, with the first edge being adjacent to the face's 0 edge.
 const AdjacentEdges: [number, number][][] = [
   [
     [1, 0],
@@ -43,67 +45,67 @@ const AdjacentEdges: [number, number][][] = [
     [5, 0],
   ],
   [
+    [0, 0],
     [5, 4],
     [10, 2],
     [6, 3],
     [2, 1],
-    [0, 0],
   ],
   [
+    [0, 1],
     [1, 4],
     [6, 2],
     [7, 3],
     [3, 1],
-    [0, 1],
   ],
   [
+    [0, 2],
     [2, 4],
     [7, 2],
     [8, 3],
     [4, 1],
-    [0, 2],
   ],
   [
+    [0, 3],
     [3, 4],
     [8, 2],
     [9, 3],
     [5, 1],
-    [0, 3],
   ],
   [
+    [0, 4],
     [4, 4],
     [9, 2],
     [10, 3],
     [1, 1],
-    [0, 4],
   ],
   [
+    [11, 0],
     [7, 4],
     [2, 2],
     [1, 3],
     [10, 1],
-    [11, 0],
   ],
   [
+    [11, 4],
     [8, 4],
     [3, 2],
     [2, 3],
     [6, 1],
-    [11, 4],
   ],
   [
+    [11, 3],
     [9, 4],
     [4, 2],
     [3, 3],
     [7, 1],
-    [11, 3],
   ],
   [
+    [11, 2],
     [10, 4],
     [5, 2],
     [4, 3],
     [8, 1],
-    [11, 2],
   ],
   [
     [11, 1],
@@ -113,11 +115,11 @@ const AdjacentEdges: [number, number][][] = [
     [9, 1],
   ],
   [
+    [6, 0],
     [10, 0],
     [9, 0],
     [8, 0],
     [7, 0],
-    [6, 0],
   ],
 ]
 
@@ -139,9 +141,10 @@ export class Puzzle {
     ],
   ) {}
 
-  rotateFace(index: number, anticlockwise = false): this {
+  turn(turn: Turn): this {
+    const { face: index, direction: anticlockwise } = turn
     assert(index >= 0 && index < this.faces.length, "Face index out of bounds")
-    this.faces[index].rotate(anticlockwise)
+    this.faces[index].turn(anticlockwise)
 
     const edges = AdjacentEdges[index].map(([f, e]) =>
       this.faces[f].getEdgeCorners(e),
@@ -158,23 +161,32 @@ export class Puzzle {
     return this
   }
 
-  getFullFace(index: number): FullPuzzleFace {
+  getFullFace(index: number): PuzzleFullFace {
     assert(index >= 0 && index < this.faces.length, "Index out of bounds")
     const face = this.faces[index]
     const edges = AdjacentEdges[index].map(([f, e]) =>
       this.faces[f].getEdgeCorners(e),
     )
 
-    return new FullPuzzleFace(
+    return new PuzzleFullFace(
       face.color,
       face.edges.map(
         (color, i) => new PuzzleEdgePiece([color, edges[i][1]]),
-      ) as FullPuzzleFace["edges"],
+      ) as PuzzleFullFace["edges"],
       face.corners.map(
         (color, i) =>
           new PuzzleCornerPiece([color, edges[i][0], edges[(i + 4) % 5][2]]),
-      ) as FullPuzzleFace["corners"],
+      ) as PuzzleFullFace["corners"],
     )
+  }
+
+  getEdgedFace(index: number): PuzzleEdgedFace {
+    assert(index >= 0 && index < this.faces.length, "Index out of bounds")
+    const face = this.faces[index]
+    const edges = AdjacentEdges[index].map(([f, e]) =>
+      this.faces[f].getEdgeCorners(e),
+    )
+    return new PuzzleEdgedFace(face, edges as PuzzleEdgedFace["edges"])
   }
 
   static SolvedPuzzle(): Puzzle {
@@ -426,7 +438,7 @@ export class PuzzleFace {
     return this
   }
 
-  rotate(anticlockwise = false): this {
+  turn(anticlockwise = false): this {
     if (anticlockwise) {
       this.edges.unshift(this.edges.pop()!)
       this.corners.unshift(this.corners.pop()!)
@@ -439,7 +451,14 @@ export class PuzzleFace {
   }
 }
 
-export class FullPuzzleFace {
+export class PuzzleEdgedFace {
+  constructor(
+    public face: PuzzleFace,
+    public edges: [PuzzleEdge, PuzzleEdge, PuzzleEdge, PuzzleEdge, PuzzleEdge],
+  ) {}
+}
+
+export class PuzzleFullFace {
   constructor(
     public color: PuzzleColor,
 
@@ -459,7 +478,7 @@ export class FullPuzzleFace {
     ],
   ) {}
 
-  flatten(): PuzzleFace {
+  get face(): PuzzleFace {
     return new PuzzleFace(
       this.color,
       this.edges.map((edge) => edge.colors[0]) as [
@@ -487,3 +506,23 @@ export class PuzzleCornerPiece {
 export class PuzzleEdgePiece {
   constructor(public colors: [PuzzleColor, PuzzleColor]) {}
 }
+
+export type PuzzleEdge = [PuzzleColor, PuzzleColor, PuzzleColor]
+
+export type Turn = {
+  face: number
+  direction: Anticlockwise
+}
+
+export function reverse(turn: Turn): Turn {
+  return {
+    face: turn.face,
+    direction: turn.direction == ANTICLOCKWISE ? CLOCKWISE : ANTICLOCKWISE,
+  }
+}
+
+const AnticlockwiseSymbol = Symbol("anticlockwise")
+export type Anticlockwise = boolean & { [AnticlockwiseSymbol]: "anticlockwise" }
+
+export const ANTICLOCKWISE: Anticlockwise = true as Anticlockwise
+export const CLOCKWISE: Anticlockwise = false as Anticlockwise
