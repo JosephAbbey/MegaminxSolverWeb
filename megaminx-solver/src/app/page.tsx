@@ -26,6 +26,7 @@ import { Group } from "three"
 import { invalidate } from "@react-three/fiber"
 import { Button } from "~/components/ui/button"
 import { useKeyPress } from "~/components/hooks/useKeyPress"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 
 export default function Home() {
   const [currentStep, setCurrentStep] = useState(-1)
@@ -90,17 +91,23 @@ export default function Home() {
     }
   }
 
-  useKeyPress(" ", () => {
+  const forward = () => {
     if (turn != null || currentStep >= steps.length - 1) return
     animateToStep(currentStep + 1)
-  })
-  useKeyPress("ArrowRight", () => {
-    if (turn != null || currentStep >= steps.length - 1) return
-    animateToStep(currentStep + 1)
-  })
-  useKeyPress("ArrowLeft", () => {
+  }
+  const backward = () => {
     if (turn != null || currentStep <= -1) return
     animateToStep(currentStep - 1)
+  }
+
+  useKeyPress(" ", () => {
+    forward()
+  })
+  useKeyPress("ArrowRight", () => {
+    forward()
+  })
+  useKeyPress("ArrowLeft", () => {
+    backward()
   })
 
   return (
@@ -108,6 +115,36 @@ export default function Home() {
       {/* Canvas Section (Left/top) */}
       <div className="fixed h-1/2 w-full md:h-full md:w-1/2">
         <Scene />
+        <div className="absolute bottom-0 left-0 m-3">
+          <Button
+            variant="outline"
+            size="icon"
+            type="button"
+            role="button"
+            onMouseDown={backward}
+            disabled={turn !== null || currentStep <= -1}
+            className={cn("cursor-not-allowed", {
+              "cursor-pointer": currentStep !== -1,
+            })}
+          >
+            <ChevronLeft aria-label="Back" />
+          </Button>
+        </div>
+        <div className="absolute right-0 bottom-0 m-3">
+          <Button
+            variant="outline"
+            size="icon"
+            type="button"
+            role="button"
+            onMouseDown={forward}
+            disabled={turn !== null || currentStep >= steps.length - 1}
+            className={cn("cursor-not-allowed", {
+              "cursor-pointer": currentStep !== steps.length - 1,
+            })}
+          >
+            <ChevronRight aria-label="Forward" />
+          </Button>
+        </div>
       </div>
 
       {/* 3D */}
@@ -130,7 +167,7 @@ export default function Home() {
           variant="outline"
           disabled={currentStep === -1}
           onMouseDown={() => animateToStep(-1)}
-          className={cn("cursor-not-allowed", {
+          className={cn("cursor-not-allowed select-none", {
             "cursor-pointer": currentStep !== -1,
           })}
         >
