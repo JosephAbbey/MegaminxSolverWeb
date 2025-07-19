@@ -90,33 +90,21 @@ export default function Home() {
     }
   }
 
-  useKeyPress(
-    " ",
-    () => {
-      if (turn != null || currentStep >= steps.length - 1) return
-      animateToStep(currentStep + 1)
-    },
-    { target: document.body },
-  )
-  useKeyPress(
-    "ArrowRight",
-    () => {
-      if (turn != null || currentStep >= steps.length - 1) return
-      animateToStep(currentStep + 1)
-    },
-    { target: document.body },
-  )
-  useKeyPress(
-    "ArrowLeft",
-    () => {
-      if (turn != null || currentStep <= -1) return
-      animateToStep(currentStep - 1)
-    },
-    { target: document.body },
-  )
+  useKeyPress(" ", () => {
+    if (turn != null || currentStep >= steps.length - 1) return
+    animateToStep(currentStep + 1)
+  })
+  useKeyPress("ArrowRight", () => {
+    if (turn != null || currentStep >= steps.length - 1) return
+    animateToStep(currentStep + 1)
+  })
+  useKeyPress("ArrowLeft", () => {
+    if (turn != null || currentStep <= -1) return
+    animateToStep(currentStep - 1)
+  })
 
   return (
-    <div className="flex h-screen flex-col md:flex-row">
+    <div className="flex h-dvh flex-col md:flex-row">
       {/* Canvas Section (Left/top) */}
       <div className="fixed h-1/2 w-full md:h-full md:w-1/2">
         <Scene />

@@ -20,14 +20,14 @@ export function useKeyPress<T extends HTMLElement>(
       }
     }
 
-    ;(target ?? window).addEventListener(
+    ;(target ?? document.body).addEventListener(
       event,
       handler as EventListener,
       eventOptions,
     )
 
     return () => {
-      ;(target ?? window).removeEventListener(
+      ;(target ?? document.body).removeEventListener(
         event,
         handler as EventListener,
         eventOptions,
