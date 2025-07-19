@@ -12,11 +12,11 @@ import {
   PuzzleFace,
   Turn,
   ANTICLOCKWISE,
-} from "@/types/Puzzle"
+} from "~/types/Puzzle"
 import { Text } from "@react-three/drei"
-import { Clip, ClippingStandardMaterial } from "@/components/fiber/Clipping"
+import { Clip, ClippingStandardMaterial } from "~/components/fiber/Clipping"
 import { Easing, Tween } from "@tweenjs/tween.js"
-import { group } from "@/components/fiber/TweenGroup"
+import { group } from "~/components/fiber/TweenGroup"
 
 function TriangleShape() {
   const shape = new Shape()
@@ -385,7 +385,7 @@ export function RotateFace({
   if (index == 11) {
     return (
       <group rotation={[0, Math.PI, Math.PI / 5]}>
-        <group rotation={[0, 0, (2 * Math.PI) / 5]}>
+        <group rotation={[0, 0, (4 * Math.PI) / 5]}>
           <group>
             <group>{children}</group>
           </group>

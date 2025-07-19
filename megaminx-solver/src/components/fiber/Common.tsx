@@ -1,7 +1,7 @@
 "use client"
 
 import { OrbitControls } from "@react-three/drei"
-import { TweenGroup } from "@/components/fiber/TweenGroup"
+import { TweenGroup } from "~/components/fiber/TweenGroup"
 
 export default function Common() {
   return (

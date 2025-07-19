@@ -1,4 +1,4 @@
-import { Puzzle, Turn } from "@/types/Puzzle"
+import { Puzzle, Turn } from "~/types/Puzzle"
 import { useState } from "react"
 
 interface PuzzleHook {

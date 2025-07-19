@@ -1,7 +1,7 @@
 "use client"
 
-import Scene, { AddToScene } from "@/components/dom/Scene"
-import Common from "@/components/fiber/Common"
+import Scene, { AddToScene } from "~/components/dom/Scene"
+import Common from "~/components/fiber/Common"
 import {
   ANTICLOCKWISE,
   CLOCKWISE,
@@ -10,21 +10,21 @@ import {
   PuzzleEdgedFace,
   reverse,
   Turn,
-} from "@/types/Puzzle"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { cn } from "@/lib/utils"
+} from "~/types/Puzzle"
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
+import { cn } from "~/lib/utils"
 import { useRef, useState } from "react"
-import usePuzzle from "@/components/hooks/Puzzle"
+import usePuzzle from "~/components/hooks/Puzzle"
 import {
   EdgedFace,
   RotateFace,
   StaticPuzzle,
   Turning,
   turnRef,
-} from "@/components/fiber/Puzzle"
+} from "~/components/fiber/Puzzle"
 import { Group } from "three"
 import { invalidate } from "@react-three/fiber"
-import { Button } from "@/components/ui/button"
+import { Button } from "~/components/ui/button"
 
 export default function Home() {
   const [currentStep, setCurrentStep] = useState(-1)
