@@ -321,7 +321,6 @@ export function Turning({
 
 export const turnRef = (ref: RefObject<Group>, turn: Turn) =>
   new Promise<void>((resolve) => {
-    console.log("turnRef", turn, ref.current, ref.current.rotation)
     ref.current.rotation.set(0, 0, 0)
     new Tween(ref.current.rotation, group)
       .to(

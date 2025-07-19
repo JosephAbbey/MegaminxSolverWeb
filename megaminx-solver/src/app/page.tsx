@@ -14,7 +14,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
 import { cn } from "~/lib/utils"
 import { useRef, useState } from "react"
-import usePuzzle from "~/components/hooks/Puzzle"
+import usePuzzle from "~/components/hooks/usePuzzle"
 import {
   EdgedFace,
   RotateFace,
@@ -25,6 +25,7 @@ import {
 import { Group } from "three"
 import { invalidate } from "@react-three/fiber"
 import { Button } from "~/components/ui/button"
+import { useKeyPress } from "~/components/hooks/useKeyPress"
 
 export default function Home() {
   const [currentStep, setCurrentStep] = useState(-1)
@@ -89,6 +90,31 @@ export default function Home() {
     }
   }
 
+  useKeyPress(
+    " ",
+    () => {
+      if (turn != null || currentStep >= steps.length - 1) return
+      animateToStep(currentStep + 1)
+    },
+    { target: document.body },
+  )
+  useKeyPress(
+    "ArrowRight",
+    () => {
+      if (turn != null || currentStep >= steps.length - 1) return
+      animateToStep(currentStep + 1)
+    },
+    { target: document.body },
+  )
+  useKeyPress(
+    "ArrowLeft",
+    () => {
+      if (turn != null || currentStep <= -1) return
+      animateToStep(currentStep - 1)
+    },
+    { target: document.body },
+  )
+
   return (
     <div className="flex h-screen flex-col md:flex-row">
       {/* Canvas Section (Left/top) */}
@@ -132,6 +158,7 @@ export default function Home() {
               "cursor-not-allowed transition-all duration-300 ease-in-out select-none",
               {
                 "ring-2 ring-blue-500": currentStep === index,
+                "ring-amber-500": turn !== null,
                 "hover:bg-accent cursor-pointer hover:shadow-lg":
                   currentStep !== index && turn == null,
               },
