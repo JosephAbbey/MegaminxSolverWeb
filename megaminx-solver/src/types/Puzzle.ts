@@ -34,8 +34,10 @@ export const PuzzleColorToHex: Record<PuzzleColor, string> = {
   GREY: "#808080",
 }
 
-// Adjacency matrix for edges that are adjacent to each face in clockwise
-// order, with the first edge being adjacent to the face's 0 edge.
+/**
+ * Adjacency matrix for edges that are adjacent to each face in clockwise
+ * order, with the first edge being adjacent to the face's 0 edge.
+ */
 const AdjacentEdges: [number, number][][] = [
   [
     [1, 0],
@@ -123,6 +125,20 @@ const AdjacentEdges: [number, number][][] = [
   ],
 ]
 
+/**
+ * Rotates an edge index by one position in the specified direction.
+ * @param index - The current edge index (0-4)
+ * @param direction - The direction to rotate (CLOCKWISE or ANTICLOCKWISE)
+ * @returns The new edge index after rotation
+ */
+function rotateEdgeIndex(index: number, direction: Anticlockwise): number {
+  if (direction === CLOCKWISE) {
+    return (index + 4) % 5 // Equivalent to (index - 1 + 5) % 5
+  } else {
+    return (index + 1) % 5
+  }
+}
+
 export class Puzzle {
   constructor(
     public faces: [
@@ -142,6 +158,17 @@ export class Puzzle {
   ) {}
 
   turn(turn: Turn): this {
+    if (turn.times && turn.times > 1) {
+      for (let i = 0; i < turn.times; i++) {
+        this.turnOne(turn)
+      }
+      return this
+    }
+    this.turnOne(turn)
+    return this
+  }
+
+  private turnOne(turn: Turn): this {
     const { face: index, direction: anticlockwise } = turn
     assert(index >= 0 && index < this.faces.length, "Face index out of bounds")
     this.faces[index].turn(anticlockwise)
@@ -175,7 +202,11 @@ export class Puzzle {
       ) as PuzzleFullFace["edges"],
       face.corners.map(
         (color, i) =>
-          new PuzzleCornerPiece([color, edges[i][0], edges[(i + 4) % 5][2]]),
+          new PuzzleCornerPiece([
+            color,
+            edges[i][0],
+            edges[rotateEdgeIndex(i, CLOCKWISE)][2],
+          ]),
       ) as PuzzleFullFace["corners"],
     )
   }
@@ -187,6 +218,412 @@ export class Puzzle {
       this.faces[f].getEdgeCorners(e),
     )
     return new PuzzleEdgedFace(face, edges as PuzzleEdgedFace["edges"])
+  }
+
+  /**
+   * Finds the edge with the given primary and secondary colors.
+   * Returns the face index and edge index of the primary and secondary if found, otherwise undefined.
+   */
+  findEdge(
+    primary: PuzzleColor,
+    secondary: PuzzleColor,
+  ): [[number, number], [number, number]] | undefined {
+    for (const [f1, face] of AdjacentEdges.entries()) {
+      for (const [e1, [f2, e2]] of face.entries()) {
+        const c1 = this.faces[f1].edges[e1]
+        const c2 = this.faces[f2].edges[e2]
+        if (c1 === primary && c2 === secondary) {
+          return [
+            [f1, e1],
+            [f2, e2],
+          ]
+        }
+        if (c1 === secondary && c2 === primary) {
+          return [
+            [f2, e2],
+            [f1, e1],
+          ]
+        }
+      }
+    }
+    return undefined
+  }
+
+  /** WHITE EDGES */
+  layer0() {
+    // Loop through each edge adjacent to the white face (face 0)
+    for (const [desiredPrimaryEdgeIndex, [f]] of AdjacentEdges[0].entries()) {
+      const [
+        [primaryFaceIndex, primaryEdgeIndex],
+        [secondaryFaceIndex, secondaryEdgeIndex],
+      ] = this.findEdge(PuzzleColor.WHITE, PuzzleColors[f])!
+      // Helper to rotate face 0 so that from is where to is
+      const rotateFace0ToEdge = (from: number, to: number) => {
+        if (from < to) {
+          for (let i = from; i < to; i++) {
+            this.turn({
+              face: 0,
+              direction: ANTICLOCKWISE,
+            })
+          }
+        } else {
+          for (let i = from; i > to; i--) {
+            this.turn({
+              face: 0,
+              direction: CLOCKWISE,
+            })
+          }
+        }
+      }
+
+      // Edge is in layer 0
+      if (primaryFaceIndex === 0) {
+        if (primaryEdgeIndex === desiredPrimaryEdgeIndex) {
+          // Edge is already in place
+          continue
+        }
+        // Rotate edge off of face 0
+        this.turn({
+          face: secondaryFaceIndex,
+          direction: CLOCKWISE, // direction does not really matter
+        })
+        // Rotate face 0 so that the desiredPrimaryEdgeIndex is where primaryEdgeIndex is
+        rotateFace0ToEdge(desiredPrimaryEdgeIndex, primaryEdgeIndex)
+        // Edge back onto face 0
+        this.turn({
+          face: secondaryFaceIndex,
+          direction: ANTICLOCKWISE,
+        })
+        // Reverse face 0
+        rotateFace0ToEdge(primaryEdgeIndex, desiredPrimaryEdgeIndex)
+        continue
+      }
+      if (secondaryFaceIndex === 0) {
+        // Edge is inverted, rotate it off
+        this.turn({
+          face: primaryFaceIndex,
+          direction: CLOCKWISE, // direction does not really matter
+        })
+        const e = rotateEdgeIndex(secondaryEdgeIndex, CLOCKWISE)
+        // Rotate face 0 so that the desiredPrimaryEdgeIndex is where e is
+        rotateFace0ToEdge(desiredPrimaryEdgeIndex, e)
+        // Edge back onto face 0
+        this.turn({
+          face: AdjacentEdges[0][e][0],
+          direction: CLOCKWISE,
+        })
+        // Reverse face 0
+        rotateFace0ToEdge(e, desiredPrimaryEdgeIndex)
+        continue
+      }
+      // Edge is in layer 2
+      if (
+        1 <= primaryFaceIndex &&
+        primaryFaceIndex <= 5 &&
+        1 <= secondaryFaceIndex &&
+        secondaryFaceIndex <= 5
+      ) {
+        const e = AdjacentEdges[secondaryFaceIndex][0][1]
+        // Rotate face 0 so that desiredPrimaryEdgeIndex is where e is (adjacent to secondaryFaceIndex)
+        rotateFace0ToEdge(desiredPrimaryEdgeIndex, e)
+        // Rotate edge onto face 0
+        if (secondaryEdgeIndex === 1) {
+          this.turn({
+            face: secondaryFaceIndex,
+            direction: CLOCKWISE,
+          })
+        } else {
+          this.turn({
+            face: secondaryFaceIndex,
+            direction: ANTICLOCKWISE,
+          })
+        }
+        // Reverse face 0
+        rotateFace0ToEdge(e, desiredPrimaryEdgeIndex)
+        continue
+      }
+      // Edge is in layer 4
+      if (
+        1 <= primaryFaceIndex &&
+        primaryFaceIndex <= 5 &&
+        6 <= secondaryFaceIndex &&
+        secondaryFaceIndex <= 10
+      ) {
+        if (primaryEdgeIndex === 2) {
+          const e = AdjacentEdges[primaryFaceIndex][0][1]
+          // Rotate face 0 so that desiredPrimaryEdgeIndex is where e is (adjacent to primaryFaceIndex)
+          rotateFace0ToEdge(desiredPrimaryEdgeIndex, e)
+
+          // Rotate edge onto layer 2
+          this.turn({
+            face: primaryFaceIndex,
+            direction: CLOCKWISE,
+          })
+
+          // Reverse face 0
+          rotateFace0ToEdge(e, desiredPrimaryEdgeIndex)
+
+          const newPrimaryEdgeIndex = rotateEdgeIndex(
+            primaryEdgeIndex,
+            CLOCKWISE,
+          )
+          const newSecondaryFaceIndex =
+            AdjacentEdges[primaryFaceIndex][newPrimaryEdgeIndex][0]
+
+          const e1 = AdjacentEdges[newSecondaryFaceIndex][0][1]
+          // Rotate face 0 so that desiredPrimaryEdgeIndex is where e1 is (adjacent to newSecondaryFaceIndex)
+          rotateFace0ToEdge(desiredPrimaryEdgeIndex, e1)
+
+          // Rotate edge onto face 0
+          this.turn({
+            face: newSecondaryFaceIndex,
+            direction: ANTICLOCKWISE,
+          })
+
+          // Reverse face 0
+          rotateFace0ToEdge(e1, desiredPrimaryEdgeIndex)
+
+          continue
+        }
+        if (primaryEdgeIndex === 3) {
+          const e = AdjacentEdges[primaryFaceIndex][0][1]
+          // Rotate face 0 so that desiredPrimaryEdgeIndex is where e is (adjacent to primaryFaceIndex)
+          rotateFace0ToEdge(desiredPrimaryEdgeIndex, e)
+
+          // Rotate edge onto layer 2
+          this.turn({
+            face: primaryFaceIndex,
+            direction: ANTICLOCKWISE,
+          })
+
+          // Reverse face 0
+          rotateFace0ToEdge(e, desiredPrimaryEdgeIndex)
+
+          const newPrimaryEdgeIndex = rotateEdgeIndex(
+            primaryEdgeIndex,
+            ANTICLOCKWISE,
+          )
+          const newSecondaryFaceIndex =
+            AdjacentEdges[primaryFaceIndex][newPrimaryEdgeIndex][0]
+
+          const e1 = AdjacentEdges[newSecondaryFaceIndex][0][1]
+          // Rotate face 0 so that desiredPrimaryEdgeIndex is where e1 is (adjacent to newSecondaryFaceIndex)
+          rotateFace0ToEdge(desiredPrimaryEdgeIndex, e1)
+
+          // Rotate edge onto face 0
+          this.turn({
+            face: newSecondaryFaceIndex,
+            direction: CLOCKWISE,
+          })
+
+          // Reverse face 0
+          rotateFace0ToEdge(e1, desiredPrimaryEdgeIndex)
+
+          continue
+        }
+      }
+      if (
+        6 <= primaryFaceIndex &&
+        primaryFaceIndex <= 10 &&
+        1 <= secondaryFaceIndex &&
+        secondaryFaceIndex <= 5
+      ) {
+        if (secondaryEdgeIndex === 2) {
+          const e = AdjacentEdges[secondaryFaceIndex][0][1]
+          // Rotate face 0 so that desiredPrimaryEdgeIndex is where e is (adjacent to secondaryFaceIndex)
+          rotateFace0ToEdge(desiredPrimaryEdgeIndex, e)
+          // Rotate edge onto face 0
+          this.turn({
+            face: secondaryFaceIndex,
+            direction: CLOCKWISE,
+            times: 2,
+          })
+          // Reverse face 0
+          rotateFace0ToEdge(e, desiredPrimaryEdgeIndex)
+          continue
+        }
+        if (secondaryEdgeIndex === 3) {
+          const e = AdjacentEdges[secondaryFaceIndex][0][1]
+          // Rotate face 0 so that desiredPrimaryEdgeIndex is where e is (adjacent to secondaryFaceIndex)
+          rotateFace0ToEdge(desiredPrimaryEdgeIndex, e)
+          // Rotate edge onto layer 2
+          this.turn({
+            face: secondaryFaceIndex,
+            direction: ANTICLOCKWISE,
+            times: 2,
+          })
+          // Reverse face 0
+          rotateFace0ToEdge(e, desiredPrimaryEdgeIndex)
+          continue
+        }
+      }
+      // Edge is in layer 6
+      if (
+        6 <= primaryFaceIndex &&
+        primaryFaceIndex <= 10 &&
+        6 <= secondaryFaceIndex &&
+        secondaryFaceIndex <= 10
+      ) {
+        if (primaryEdgeIndex === 1) {
+          this.turn({
+            face: primaryFaceIndex,
+            direction: ANTICLOCKWISE,
+          })
+          const newPrimaryEdgeIndex = rotateEdgeIndex(
+            primaryEdgeIndex,
+            ANTICLOCKWISE,
+          )
+          const newSecondaryFaceIndex =
+            AdjacentEdges[primaryFaceIndex][newPrimaryEdgeIndex][0]
+          const e = AdjacentEdges[newSecondaryFaceIndex][0][1]
+          // Rotate face 0 so that desiredPrimaryEdgeIndex is where e is (adjacent to newSecondaryFaceIndex)
+          rotateFace0ToEdge(desiredPrimaryEdgeIndex, e)
+          // Rotate edge onto face 0
+          this.turn({
+            face: newSecondaryFaceIndex,
+            direction: CLOCKWISE,
+            times: 2,
+          })
+          // Reverse face 0
+          rotateFace0ToEdge(e, desiredPrimaryEdgeIndex)
+          continue
+        }
+        if (primaryEdgeIndex === 4) {
+          this.turn({
+            face: primaryFaceIndex,
+            direction: CLOCKWISE,
+          })
+          const newPrimaryEdgeIndex = rotateEdgeIndex(
+            primaryEdgeIndex,
+            CLOCKWISE,
+          )
+          const newSecondaryFaceIndex =
+            AdjacentEdges[primaryFaceIndex][newPrimaryEdgeIndex][0]
+          const e = AdjacentEdges[newSecondaryFaceIndex][0][1]
+          // Rotate face 0 so that desiredPrimaryEdgeIndex is where e is (adjacent to newSecondaryFaceIndex)
+          rotateFace0ToEdge(desiredPrimaryEdgeIndex, e)
+          // Rotate edge onto face 0
+          this.turn({
+            face: newSecondaryFaceIndex,
+            direction: ANTICLOCKWISE,
+            times: 2,
+          })
+          // Reverse face 0
+          rotateFace0ToEdge(e, desiredPrimaryEdgeIndex)
+          continue
+        }
+      }
+      // Edge is in layer 8
+      if (primaryFaceIndex === 11) {
+        // Turn the edge onto layer 6
+        this.turn({
+          face: secondaryFaceIndex,
+          direction: ANTICLOCKWISE,
+        })
+        const newSecondaryEdgeIndex = rotateEdgeIndex(
+          secondaryEdgeIndex,
+          ANTICLOCKWISE,
+        )
+        const newPrimaryFaceIndex =
+          AdjacentEdges[secondaryFaceIndex][newSecondaryEdgeIndex][0]
+        const newPrimaryEdgeIndex =
+          AdjacentEdges[secondaryFaceIndex][newSecondaryEdgeIndex][1]
+
+        // Turn edge onto layer 4
+        this.turn({
+          face: newPrimaryFaceIndex,
+          direction: CLOCKWISE,
+        })
+        const newNewPrimaryEdgeIndex = rotateEdgeIndex(
+          newPrimaryEdgeIndex,
+          CLOCKWISE,
+        )
+        const newNewSecondaryFaceIndex =
+          AdjacentEdges[newPrimaryFaceIndex][newNewPrimaryEdgeIndex][0]
+
+        const e = AdjacentEdges[newNewSecondaryFaceIndex][0][1]
+        // Rotate face 0 so that desiredPrimaryEdgeIndex is where e is (adjacent to newNewSecondaryFaceIndex)
+        rotateFace0ToEdge(desiredPrimaryEdgeIndex, e)
+
+        // Rotate edge onto face 0
+        this.turn({
+          face: newNewSecondaryFaceIndex,
+          direction: ANTICLOCKWISE,
+          times: 2,
+        })
+
+        // Reverse face 0
+        rotateFace0ToEdge(e, desiredPrimaryEdgeIndex)
+        continue
+      }
+      if (secondaryFaceIndex === 11) {
+        // Turn the edge onto layer 4
+        this.turn({
+          face: primaryFaceIndex,
+          direction: CLOCKWISE,
+          times: 2,
+        })
+        const newPrimaryEdgeIndex = rotateEdgeIndex(
+          rotateEdgeIndex(primaryEdgeIndex, CLOCKWISE),
+          CLOCKWISE,
+        )
+        const newSecondaryFaceIndex =
+          AdjacentEdges[primaryFaceIndex][newPrimaryEdgeIndex][0]
+
+        const e = AdjacentEdges[newSecondaryFaceIndex][0][1]
+        // Rotate face 0 so that desiredPrimaryEdgeIndex is where e is (adjacent to newSecondaryFaceIndex)
+        rotateFace0ToEdge(desiredPrimaryEdgeIndex, e)
+        // Rotate edge onto face 0
+        this.turn({
+          face: newSecondaryFaceIndex,
+          direction: ANTICLOCKWISE,
+          times: 2,
+        })
+        // Reverse face 0
+        rotateFace0ToEdge(e, desiredPrimaryEdgeIndex)
+        continue
+      }
+    }
+  }
+
+  /** WHITE CORNERS */
+  layer1() {}
+
+  /** EDGES */
+  layer2() {}
+
+  /** CORNERS */
+  layer3() {}
+
+  /** EDGES */
+  layer4() {}
+
+  /** CORNERS */
+  layer5() {}
+
+  /** EDGES */
+  layer6() {}
+
+  /** GREY EDGES */
+  layer8() {}
+
+  /** GREY CORNERS */
+  layer7() {}
+
+  solve() {
+    this.layer0()
+    this.layer1()
+    this.layer2()
+    this.layer3()
+    this.layer4()
+    this.layer5()
+    this.layer6()
+    this.layer8()
+    this.layer7()
+  }
+
+  getTrackingPuzzle(): TrackingPuzzle {
+    return new TrackingPuzzle(this)
   }
 
   static SolvedPuzzle(): Puzzle {
@@ -397,6 +834,35 @@ export class Puzzle {
       ),
     ])
   }
+
+  isSolved(): boolean {
+    return this.faces.every(
+      (face) =>
+        face.edges.every((color) => color === face.color) &&
+        face.corners.every((color) => color === face.color),
+    )
+  }
+
+  scramble(): this {
+    const randomTurn = () => ({
+      face: Math.floor(Math.random() * this.faces.length),
+      direction: Math.random() < 0.5 ? ANTICLOCKWISE : CLOCKWISE,
+    })
+
+    for (let i = 0; i < 100; i++) {
+      this.turn(randomTurn())
+    }
+    return this
+  }
+
+  copy(): Puzzle {
+    return new Puzzle(
+      this.faces.map(
+        (face) =>
+          new PuzzleFace(face.color, [...face.edges], [...face.corners]),
+      ) as ConstructorParameters<typeof Puzzle>[0],
+    )
+  }
 }
 
 export class PuzzleFace {
@@ -512,11 +978,13 @@ export type PuzzleEdge = [PuzzleColor, PuzzleColor, PuzzleColor]
 export type Turn = {
   face: number
   direction: Anticlockwise
+  /** @default 1 */
+  times?: number
 }
 
 export function reverse(turn: Turn): Turn {
   return {
-    face: turn.face,
+    ...turn,
     direction: turn.direction == ANTICLOCKWISE ? CLOCKWISE : ANTICLOCKWISE,
   }
 }
@@ -526,3 +994,89 @@ export type Anticlockwise = boolean & { [AnticlockwiseSymbol]: "anticlockwise" }
 
 export const ANTICLOCKWISE: Anticlockwise = true as Anticlockwise
 export const CLOCKWISE: Anticlockwise = false as Anticlockwise
+
+export class TrackingPuzzle extends Puzzle {
+  turns: Turn[] = []
+
+  constructor(puzzle: Puzzle) {
+    super(puzzle.faces)
+  }
+
+  turn(turn: Turn): this {
+    super.turn(turn)
+    this.turns.push(turn)
+    return this
+  }
+
+  getOptimisedTurns(): Turn[] {
+    return optimiseTurns(this.turns)
+  }
+}
+
+// export function collapseTurns(turns: Turn[]): Turn[] {
+//   const collapsed: Turn[] = []
+//   let currentTurn: Turn | null = null
+//   for (const turn of turns) {
+//     if (
+//       currentTurn &&
+//       currentTurn.face === turn.face &&
+//       currentTurn.direction === turn.direction
+//     ) {
+//       currentTurn.times = (currentTurn.times ?? 1) + (turn.times ?? 1)
+//     } else {
+//       if (currentTurn) {
+//         collapsed.push(currentTurn)
+//       }
+//       currentTurn = { ...turn }
+//     }
+//   }
+//   if (currentTurn) {
+//     collapsed.push(currentTurn)
+//   }
+//   return collapsed
+// }
+
+export function optimiseTurns(turns: Turn[]): Turn[] {
+  // Could go further, e.g. white clockwise, lime anticlockwise, white anticlockwise == lime anticlockwise
+  const optimised: Turn[] = []
+  let currentTurn: Turn | null = null
+  for (const turn of turns) {
+    if (currentTurn) {
+      if (currentTurn.face === turn.face) {
+        if (currentTurn.direction !== turn.direction) {
+          currentTurn.times = (currentTurn.times ?? 1) - (turn.times ?? 1)
+        } else {
+          currentTurn.times = (currentTurn.times ?? 1) + (turn.times ?? 1)
+        }
+      } else {
+        optimised.push(currentTurn)
+        currentTurn = { ...turn }
+      }
+    } else {
+      currentTurn = { ...turn }
+    }
+  }
+  if (currentTurn) {
+    if ((currentTurn.times ?? 1) > 0) {
+      optimised.push(currentTurn)
+    }
+  }
+  const reoptimised: Turn[] = []
+  for (const turn of optimised) {
+    let times = turn.times ?? 1
+    let direction = turn.direction
+    if (times < 0) {
+      times = -times
+      direction = !direction as Anticlockwise
+    }
+    times = times % 5
+    if (times > 2) {
+      times = 5 - times
+      direction = !direction as Anticlockwise
+    }
+    if (times !== 0) {
+      reoptimised.push({ ...turn, times, direction })
+    }
+  }
+  return reoptimised
+}
