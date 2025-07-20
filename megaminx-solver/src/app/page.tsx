@@ -4,7 +4,6 @@ import Scene, { AddToScene } from "~/components/dom/Scene"
 import Common from "~/components/fiber/Common"
 import {
   ANTICLOCKWISE,
-  CLOCKWISE,
   Puzzle,
   PuzzleColors,
   PuzzleEdgedFace,
