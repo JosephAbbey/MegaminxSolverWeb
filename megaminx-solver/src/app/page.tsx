@@ -141,7 +141,7 @@ export default function Home() {
   return (
     <div className="flex h-dvh flex-col md:flex-row">
       {/* Canvas Section (Left/top) */}
-      <div className="fixed h-1/2 w-full md:h-full md:w-1/2">
+      <div className="shadow-background fixed h-1/2 w-full shadow-lg md:h-full md:w-1/2 md:shadow-none">
         <Scene />
         <div className="absolute bottom-0 left-0 m-3">
           <Button
