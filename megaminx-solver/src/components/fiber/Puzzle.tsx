@@ -1,6 +1,6 @@
 "use client"
 
-const DEBUG = false
+export const DEBUG = false
 
 import { ComponentProps, ReactNode, RefObject, useMemo } from "react"
 import { Group, Plane, Shape, ShapeGeometry, Vector3 } from "three"

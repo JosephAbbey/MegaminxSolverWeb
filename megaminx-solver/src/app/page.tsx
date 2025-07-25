@@ -15,6 +15,7 @@ import { cn } from "~/lib/utils"
 import { useRef, useState } from "react"
 import usePuzzle from "~/components/hooks/usePuzzle"
 import {
+  DEBUG,
   EdgedFace,
   RotateFace,
   StaticPuzzle,
@@ -75,7 +76,7 @@ export default function Home() {
       setAnimateFace(puzzle.state.getEdgedFace(singleTurn.face))
       setTurn(singleTurn)
       invalidate()
-      await turnRef(turningRef, singleTurn)
+      if (!DEBUG) await turnRef(turningRef, singleTurn)
       puzzle.turn(singleTurn)
       setTurn(null)
     }
@@ -118,12 +119,15 @@ export default function Home() {
   const solve = () => {
     const p = puzzle.state.copy().getTrackingPuzzle()
     p.solve()
+    // setSteps(p.turns)
     setSteps(p.getOptimisedTurns())
     setCurrentStep(-1)
   }
 
   const scramble = async () => {
     const p = Puzzle.SolvedPuzzle().scramble()
+    // p.layer0()
+    // p.layer1()
     setSteps([])
     puzzle.setState(p)
     setCurrentStep(-1)
@@ -207,10 +211,10 @@ export default function Home() {
         </Button>
         <Button
           variant="outline"
-          disabled={currentStep === -1}
+          disabled={currentStep === -1 || turn != null}
           onMouseDown={() => animateToStep(-1)}
           className={cn("cursor-not-allowed select-none", {
-            "cursor-pointer": currentStep !== -1,
+            "cursor-pointer": currentStep !== -1 && turn == null,
           })}
         >
           Reset
@@ -219,6 +223,7 @@ export default function Home() {
           <Card
             onMouseDown={() => animateToStep(index)}
             key={index}
+            aria-disabled={turn !== null}
             aria-checked={currentStep === index}
             role="radio"
             className={cn(
