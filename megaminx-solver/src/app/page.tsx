@@ -4,8 +4,10 @@ import Scene, { AddToScene } from "~/components/dom/Scene"
 import Common from "~/components/fiber/Common"
 import {
   ANTICLOCKWISE,
+  CLOCKWISE,
   Puzzle,
   PuzzleColors,
+  PuzzleColorToHex,
   PuzzleEdgedFace,
   reverse,
   Turn,
@@ -26,7 +28,14 @@ import { Group } from "three"
 import { invalidate } from "@react-three/fiber"
 import { Button } from "~/components/ui/button"
 import { useKeyPress } from "~/components/hooks/useKeyPress"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import {
+  ChevronLeft,
+  ChevronRight,
+  Pentagon,
+  RotateCcw,
+  RotateCw,
+  X,
+} from "lucide-react"
 
 export default function Home() {
   const [currentStep, setCurrentStep] = useState(-1)
@@ -143,9 +152,9 @@ export default function Home() {
   }
 
   return (
-    <div className="flex h-dvh flex-col md:flex-row">
+    <div className="flex h-dvh">
       {/* Canvas Section (Left/top) */}
-      <div className="shadow-background fixed h-1/2 w-full shadow-lg md:h-full md:w-1/2 md:shadow-none">
+      <div className="shadow-background fixed h-1/2 w-full shadow-lg md:mr-(--container-xl) md:h-full md:w-[-webkit-fill-available] md:shadow-none">
         <Scene />
         <div className="absolute bottom-0 left-0 m-3">
           <Button
@@ -194,7 +203,10 @@ export default function Home() {
       </AddToScene>
 
       {/* Steps Section (Right/bottom) */}
-      <div className="mt-auto ml-0 flex h-1/2 w-full flex-col gap-4 overflow-y-scroll p-4 md:mt-0 md:ml-auto md:h-full md:w-1/2">
+      <div
+        role="radiogroup"
+        className="mt-auto ml-0 flex h-1/2 w-full flex-col gap-4 overflow-y-scroll p-4 md:mt-0 md:ml-auto md:h-full md:w-1/2 md:max-w-xl"
+      >
         <Button
           variant="outline"
           className="cursor-pointer"
@@ -230,7 +242,7 @@ export default function Home() {
               "cursor-not-allowed transition-all duration-300 ease-in-out select-none",
               {
                 "ring-2 ring-blue-500": currentStep === index,
-                "ring-amber-500": turn !== null,
+                "opacity-50 ring-amber-500": turn !== null,
                 "hover:bg-accent cursor-pointer hover:shadow-lg":
                   currentStep !== index && turn == null,
               },
@@ -238,7 +250,7 @@ export default function Home() {
           >
             <CardHeader>
               <CardTitle>
-                {index + 1}. Turn {PuzzleColors[step.face]} face{" "}
+                {index + 1}. Turn {PuzzleColors[step.face]} {step.face} face{" "}
                 {step.direction == ANTICLOCKWISE
                   ? "ANTICLOCKWISE"
                   : "CLOCKWISE"}{" "}
@@ -246,13 +258,31 @@ export default function Home() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p>
-                Lorem ipsum dolor sit amet consectetur, adipisicing elit.
-                Pariatur officiis asperiores nam, necessitatibus perspiciatis
-                voluptatibus, quasi voluptates porro consequuntur quia laborum
-                libero beatae aliquam fugiat, sequi reprehenderit quidem
-                aspernatur. Adipisci.
-              </p>
+              {/* draw a regular pentagon of the color */}
+              <div className="flex flex-row items-center justify-center gap-10">
+                <div
+                  className={cn(
+                    "relative flex items-center justify-center text-black",
+                  )}
+                >
+                  <Pentagon
+                    className="h-16 w-16"
+                    fill={PuzzleColorToHex[PuzzleColors[step.face]]}
+                    strokeWidth={1}
+                  ></Pentagon>
+                  {step.direction === CLOCKWISE ? (
+                    <RotateCw className="absolute h-8 w-8" />
+                  ) : (
+                    <RotateCcw className="absolute h-8 w-8" />
+                  )}
+                </div>
+                {step.times === 2 && (
+                  <>
+                    <X />
+                    <div className="w-16 text-center text-5xl">2</div>
+                  </>
+                )}
+              </div>
             </CardContent>
           </Card>
         ))}
