@@ -31,11 +31,13 @@ import { useKeyPress } from "~/components/hooks/useKeyPress"
 import {
   ChevronLeft,
   ChevronRight,
+  Paintbrush,
   Pentagon,
   RotateCcw,
   RotateCw,
   X,
 } from "lucide-react"
+import Link from "next/link"
 
 export default function Home() {
   const [currentStep, setCurrentStep] = useState(-1)
@@ -156,6 +158,22 @@ export default function Home() {
       {/* Canvas Section (Left/top) */}
       <div className="shadow-background fixed h-1/2 w-full shadow-lg md:mr-(--container-xl) md:h-full md:w-[-webkit-fill-available] md:shadow-none">
         <Scene />
+        <div className="absolute top-0 right-0 m-3">
+          <Button
+            variant="outline"
+            size="icon"
+            type="button"
+            role="link"
+            onMouseDown={forward}
+            disabled={turn !== null || currentStep >= steps.length - 1}
+            className="cursor-pointer"
+            asChild
+          >
+            <Link href="/paint">
+              <Paintbrush aria-label="Paint" />
+            </Link>
+          </Button>
+        </div>
         <div className="absolute bottom-0 left-0 m-3">
           <Button
             variant="outline"

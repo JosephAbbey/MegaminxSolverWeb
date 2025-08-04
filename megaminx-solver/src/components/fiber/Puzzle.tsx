@@ -126,10 +126,12 @@ function Pentagon({
 function Face({
   index,
   face,
+  onPointerDown,
   ...props
 }: {
   index?: number
   face: PuzzleFace
+  onPointerDown?: (edge?: number, isCorner?: boolean) => void
 } & ComponentProps<"group">) {
   return (
     <group {...props}>
@@ -139,7 +141,7 @@ function Face({
           <ClippingStandardMaterial color="black" />
         </Text>
       )}
-      <Pentagon color={face.color} />
+      <Pentagon color={face.color} onPointerDown={() => onPointerDown?.()} />
       {face.edges.map((edge, i) => (
         <Triangle
           key={i}
@@ -151,6 +153,7 @@ function Face({
             1.825 * Math.sin(((i * 4 + 11) / 10) * Math.PI),
             0,
           ]}
+          onPointerDown={() => onPointerDown?.(i, false)}
         />
       ))}
       {face.corners.map((corner, i) => (
@@ -164,6 +167,7 @@ function Face({
             1.3 * Math.sin(((i * 4 + 9) / 10) * Math.PI),
             0,
           ]}
+          onPointerDown={() => onPointerDown?.(i, true)}
         />
       ))}
     </group>
@@ -176,9 +180,11 @@ const cr = r - 1.7
 export function StaticPuzzle({
   puzzle,
   hiddenFace,
+  onPointerDown,
 }: {
   puzzle: Puzzle
   hiddenFace?: number | null
+  onPointerDown?: (face: number, edge?: number, isCorner?: boolean) => void
 }) {
   // generate a plane to clip the hidden face
   const clipPlane = useMemo(() => {
@@ -214,6 +220,7 @@ export function StaticPuzzle({
         face={puzzle.faces[0]}
         position={[0, 0, r]}
         rotation={[0, 0, (4 * Math.PI) / 5]}
+        onPointerDown={(edge, isCorner) => onPointerDown?.(0, edge, isCorner)}
       />
       {puzzle.faces.slice(1, 6).map((face, i) => (
         <group key={i} rotation={[0, 0, ((i * 4 - 1) * Math.PI) / 10]}>
@@ -224,6 +231,9 @@ export function StaticPuzzle({
                 face={face}
                 position={[0, 0, r]}
                 rotation={[0, 0, 0]}
+                onPointerDown={(edge, isCorner) =>
+                  onPointerDown?.(i + 1, edge, isCorner)
+                }
               />
             </group>
           </group>
@@ -239,6 +249,9 @@ export function StaticPuzzle({
                   face={face}
                   position={[0, 0, r]}
                   rotation={[0, 0, 0]}
+                  onPointerDown={(edge, isCorner) =>
+                    onPointerDown?.(i + 6, edge, isCorner)
+                  }
                 />
               </group>
             </group>
@@ -249,6 +262,9 @@ export function StaticPuzzle({
           face={puzzle.faces[11]}
           position={[0, 0, r]}
           rotation={[0, 0, -(2 * Math.PI) / 5]}
+          onPointerDown={(edge, isCorner) =>
+            onPointerDown?.(11, edge, isCorner)
+          }
         />
       </group>
     </Clip>
