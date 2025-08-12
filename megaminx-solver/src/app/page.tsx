@@ -39,6 +39,7 @@ import {
   RotateCw,
   X,
 } from "lucide-react"
+import { is } from "@react-three/fiber/dist/declarations/src/core/utils"
 
 export default function Home() {
   const puzzle = usePuzzle(Puzzle.SolvedPuzzle())
@@ -141,7 +142,14 @@ export default function Home() {
             size="icon"
             type="button"
             role="link"
-            onMouseDown={() => setIsEditing((prev) => !prev)}
+            onMouseDown={() => {
+              if (isEditing) {
+                setIsEditing(false)
+                solve() // Recalculate steps when exiting edit mode
+              } else {
+                setIsEditing(true)
+              }
+            }}
             disabled={turn !== null}
             className="cursor-pointer"
           >
