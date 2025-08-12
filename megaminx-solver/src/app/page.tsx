@@ -45,6 +45,7 @@ export default function Home() {
 
   const [isEditing, setIsEditing] = useState(false)
   const [paintColor, setPaintColor] = useState<PuzzleColor>(PuzzleColor.WHITE)
+  const [isInvalid, setIsInvalid] = useState(false)
 
   const [currentStep, setCurrentStep] = useState(-1)
   const [steps, setSteps] = useState<Turn[]>([])
@@ -105,7 +106,15 @@ export default function Home() {
 
   const solve = () => {
     const p = puzzle.state.copy().getTrackingPuzzle()
-    p.solve()
+    try {
+      p.solve()
+    } catch (e) {
+      console.error("Error solving puzzle:", e)
+      setSteps([])
+      setCurrentStep(-1)
+      setIsInvalid(true)
+      return
+    }
     // setSteps(p.turns)
     setSteps(p.getOptimisedTurns())
     setCurrentStep(-1)
@@ -144,6 +153,7 @@ export default function Home() {
             onMouseDown={() => {
               if (isEditing) {
                 setIsEditing(false)
+                setIsInvalid(false)
                 solve() // Recalculate steps when exiting edit mode
               } else {
                 setIsEditing(true)
@@ -266,16 +276,18 @@ export default function Home() {
           >
             Solve
           </Button>
-          <Button
-            variant="outline"
-            disabled={currentStep === -1 || turn != null}
-            onMouseDown={() => animateToStep(-1)}
-            className={cn("cursor-not-allowed select-none", {
-              "cursor-pointer": currentStep !== -1 && turn == null,
-            })}
-          >
-            Reset
-          </Button>
+          {steps.length > 0 && (
+            <Button
+              variant="outline"
+              disabled={currentStep === -1 || turn != null}
+              onMouseDown={() => animateToStep(-1)}
+              className={cn("cursor-not-allowed select-none", {
+                "cursor-pointer": currentStep !== -1 && turn == null,
+              })}
+            >
+              Reset
+            </Button>
+          )}
           {steps.map((step, index) => (
             <Card
               onMouseDown={() => animateToStep(index)}
@@ -331,6 +343,17 @@ export default function Home() {
               </CardContent>
             </Card>
           ))}
+          {isInvalid && (
+            <Card className="bg-destructive/30 flex-1">
+              <CardHeader>
+                <CardTitle>Invalid Puzzle</CardTitle>
+              </CardHeader>
+              <CardContent>
+                The current puzzle state is invalid. Please check the colors and
+                try again.
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
     </div>
