@@ -39,7 +39,6 @@ import {
   RotateCw,
   X,
 } from "lucide-react"
-import { is } from "@react-three/fiber/dist/declarations/src/core/utils"
 
 export default function Home() {
   const puzzle = usePuzzle(Puzzle.SolvedPuzzle())
