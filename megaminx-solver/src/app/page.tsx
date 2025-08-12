@@ -6,6 +6,7 @@ import {
   ANTICLOCKWISE,
   CLOCKWISE,
   Puzzle,
+  PuzzleColor,
   PuzzleColors,
   PuzzleColorToHex,
   PuzzleEdgedFace,
@@ -29,6 +30,7 @@ import { invalidate } from "@react-three/fiber"
 import { Button } from "~/components/ui/button"
 import { useKeyPress } from "~/components/hooks/useKeyPress"
 import {
+  Check,
   ChevronLeft,
   ChevronRight,
   Paintbrush,
@@ -37,41 +39,15 @@ import {
   RotateCw,
   X,
 } from "lucide-react"
-import Link from "next/link"
 
 export default function Home() {
-  const [currentStep, setCurrentStep] = useState(-1)
-  const [steps, setSteps] = useState<Turn[]>([
-    // {
-    //   face: 0,
-    //   direction: CLOCKWISE,
-    // },
-    // {
-    //   face: 1,
-    //   direction: CLOCKWISE,
-    // },
-    // {
-    //   face: 2,
-    //   direction: CLOCKWISE,
-    // },
-    // {
-    //   face: 3,
-    //   direction: ANTICLOCKWISE,
-    // },
-    // {
-    //   face: 4,
-    //   direction: CLOCKWISE,
-    // },
-    // {
-    //   face: 5,
-    //   direction: CLOCKWISE,
-    // },
-    // {
-    //   face: 11,
-    //   direction: ANTICLOCKWISE,
-    // },
-  ])
   const puzzle = usePuzzle(Puzzle.SolvedPuzzle())
+
+  const [isEditing, setIsEditing] = useState(false)
+  const [paintColor, setPaintColor] = useState<PuzzleColor>(PuzzleColor.WHITE)
+
+  const [currentStep, setCurrentStep] = useState(-1)
+  const [steps, setSteps] = useState<Turn[]>([])
 
   const [turn, setTurn] = useState<Turn | null>(null)
 
@@ -158,153 +134,198 @@ export default function Home() {
       {/* Canvas Section (Left/top) */}
       <div className="shadow-background fixed h-1/2 w-full shadow-lg md:mr-(--container-xl) md:h-full md:w-[-webkit-fill-available] md:shadow-none">
         <Scene />
-        <div className="absolute top-0 right-0 m-3">
+        <div className="absolute top-0 right-0 m-4">
+          {/* Editing Toggle */}
           <Button
             variant="outline"
             size="icon"
             type="button"
             role="link"
-            onMouseDown={forward}
-            disabled={turn !== null || currentStep >= steps.length - 1}
+            onMouseDown={() => setIsEditing((prev) => !prev)}
+            disabled={turn !== null}
             className="cursor-pointer"
-            asChild
           >
-            <Link href="/paint">
+            {isEditing ? (
+              <Check aria-label="Done" />
+            ) : (
               <Paintbrush aria-label="Paint" />
-            </Link>
+            )}
           </Button>
         </div>
-        <div className="absolute bottom-0 left-0 m-3">
-          <Button
-            variant="outline"
-            size="icon"
-            type="button"
-            role="button"
-            onMouseDown={backward}
-            disabled={turn !== null || currentStep <= -1}
-            className={cn("cursor-not-allowed", {
-              "cursor-pointer": currentStep !== -1,
-            })}
-          >
-            <ChevronLeft aria-label="Back" />
-          </Button>
-        </div>
-        <div className="absolute right-0 bottom-0 m-3">
-          <Button
-            variant="outline"
-            size="icon"
-            type="button"
-            role="button"
-            onMouseDown={forward}
-            disabled={turn !== null || currentStep >= steps.length - 1}
-            className={cn("cursor-not-allowed", {
-              "cursor-pointer": currentStep !== steps.length - 1,
-            })}
-          >
-            <ChevronRight aria-label="Forward" />
-          </Button>
-        </div>
+
+        {/* Solution Controls */}
+        {!isEditing && (
+          <>
+            <div className="absolute bottom-0 left-0 m-4">
+              <Button
+                variant="outline"
+                size="icon"
+                type="button"
+                role="button"
+                onMouseDown={backward}
+                disabled={turn !== null || currentStep <= -1}
+                className={cn("cursor-not-allowed", {
+                  "cursor-pointer": currentStep !== -1,
+                })}
+              >
+                <ChevronLeft aria-label="Back" />
+              </Button>
+            </div>
+            <div className="absolute right-0 bottom-0 m-4">
+              <Button
+                variant="outline"
+                size="icon"
+                type="button"
+                role="button"
+                onMouseDown={forward}
+                disabled={turn !== null || currentStep >= steps.length - 1}
+                className={cn("cursor-not-allowed", {
+                  "cursor-pointer": currentStep !== steps.length - 1,
+                })}
+              >
+                <ChevronRight aria-label="Forward" />
+              </Button>
+            </div>
+          </>
+        )}
       </div>
 
       {/* 3D */}
       <AddToScene>
         <Common />
-        <StaticPuzzle puzzle={puzzle.state} hiddenFace={turn?.face} />
+        <StaticPuzzle
+          onPointerDown={(face, edge, isCorner) => {
+            if (isEditing && edge !== null && edge !== undefined) {
+              puzzle.setPieceColor(paintColor, face, edge, isCorner)
+            }
+          }}
+          puzzle={puzzle.state}
+          hiddenFace={turn?.face}
+        />
         <group visible={turn !== null}>
           <RotateFace index={turn?.face ?? -1}>
             <Turning turningRef={turningRef}>
-              {/* <Text>{typeof animateFace}</Text> */}
               {animateFace && <EdgedFace face={animateFace} />}
             </Turning>
           </RotateFace>
         </group>
       </AddToScene>
 
-      {/* Steps Section (Right/bottom) */}
-      <div
-        role="radiogroup"
-        className="mt-auto ml-0 flex h-1/2 w-full flex-col gap-4 overflow-y-scroll p-4 md:mt-0 md:ml-auto md:h-full md:w-1/2 md:max-w-xl"
-      >
-        <Button
-          variant="outline"
-          className="cursor-pointer"
-          onMouseDown={() => scramble()}
-        >
-          Scramble
-        </Button>
-        <Button
-          variant="outline"
-          className="cursor-pointer"
-          onMouseDown={() => solve()}
-        >
-          Solve
-        </Button>
-        <Button
-          variant="outline"
-          disabled={currentStep === -1 || turn != null}
-          onMouseDown={() => animateToStep(-1)}
-          className={cn("cursor-not-allowed select-none", {
-            "cursor-pointer": currentStep !== -1 && turn == null,
-          })}
-        >
-          Reset
-        </Button>
-        {steps.map((step, index) => (
-          <Card
-            onMouseDown={() => animateToStep(index)}
-            key={index}
-            aria-disabled={turn !== null}
-            aria-checked={currentStep === index}
-            role="radio"
-            className={cn(
-              "cursor-not-allowed transition-all duration-300 ease-in-out select-none",
-              {
-                "ring-2 ring-blue-500": currentStep === index,
-                "opacity-50 ring-amber-500": turn !== null,
-                "hover:bg-accent cursor-pointer hover:shadow-lg":
-                  currentStep !== index && turn == null,
-              },
-            )}
+      {/* Color Picker (Bottom right) */}
+      {isEditing && (
+        <div className="mt-auto ml-0 h-1/2 w-full p-4 md:mt-0 md:ml-auto md:h-full md:w-1/2 md:max-w-xl">
+          <div
+            role="radiogroup"
+            className="grid grid-cols-4 items-center justify-items-center gap-2 md:w-max md:grid-cols-3"
           >
-            <CardHeader>
-              <CardTitle>
-                {index + 1}. Turn {PuzzleColors[step.face]} {step.face} face{" "}
-                {step.direction == ANTICLOCKWISE
-                  ? "ANTICLOCKWISE"
-                  : "CLOCKWISE"}{" "}
-                {step.times === 2 ? "TWICE" : ""}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {/* draw a regular pentagon of the color */}
-              <div className="flex flex-row items-center justify-center gap-10">
-                <div
-                  className={cn(
-                    "relative flex items-center justify-center text-black",
-                  )}
-                >
-                  <Pentagon
-                    className="h-16 w-16"
-                    fill={PuzzleColorToHex[PuzzleColors[step.face]]}
-                    strokeWidth={1}
-                  ></Pentagon>
-                  {step.direction === CLOCKWISE ? (
-                    <RotateCw className="absolute h-8 w-8" />
-                  ) : (
-                    <RotateCcw className="absolute h-8 w-8" />
+            {PuzzleColors.map((c) => (
+              <div
+                key={c}
+                role="radio"
+                aria-checked={paintColor === c}
+                className={cn(
+                  "flex aspect-square w-full cursor-pointer items-center justify-center rounded-sm text-black hover:opacity-80 md:h-12 md:w-12",
+                  {
+                    "border-4 border-black": paintColor === c,
+                  },
+                )}
+                style={{ backgroundColor: PuzzleColorToHex[c] }}
+                onClick={() => setPaintColor(c)}
+              >
+                {paintColor === c && <Check />}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Steps Section (Right/bottom) */}
+      {!isEditing && (
+        <div
+          role="radiogroup"
+          className="mt-auto ml-0 flex h-1/2 w-full flex-col gap-4 overflow-y-scroll p-4 md:mt-0 md:ml-auto md:h-full md:w-1/2 md:max-w-xl"
+        >
+          <Button
+            variant="outline"
+            className="cursor-pointer"
+            onMouseDown={() => scramble()}
+          >
+            Scramble
+          </Button>
+          <Button
+            variant="outline"
+            className="cursor-pointer"
+            onMouseDown={() => solve()}
+          >
+            Solve
+          </Button>
+          <Button
+            variant="outline"
+            disabled={currentStep === -1 || turn != null}
+            onMouseDown={() => animateToStep(-1)}
+            className={cn("cursor-not-allowed select-none", {
+              "cursor-pointer": currentStep !== -1 && turn == null,
+            })}
+          >
+            Reset
+          </Button>
+          {steps.map((step, index) => (
+            <Card
+              onMouseDown={() => animateToStep(index)}
+              key={index}
+              aria-disabled={turn !== null}
+              aria-checked={currentStep === index}
+              role="radio"
+              className={cn(
+                "cursor-not-allowed transition-all duration-300 ease-in-out select-none",
+                {
+                  "ring-2 ring-blue-500": currentStep === index,
+                  "opacity-50 ring-amber-500": turn !== null,
+                  "hover:bg-accent cursor-pointer hover:shadow-lg":
+                    currentStep !== index && turn == null,
+                },
+              )}
+            >
+              <CardHeader>
+                <CardTitle>
+                  {index + 1}. Turn {PuzzleColors[step.face]} {step.face} face{" "}
+                  {step.direction == ANTICLOCKWISE
+                    ? "ANTICLOCKWISE"
+                    : "CLOCKWISE"}{" "}
+                  {step.times === 2 ? "TWICE" : ""}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {/* draw a regular pentagon of the color */}
+                <div className="flex flex-row items-center justify-center gap-10">
+                  <div
+                    className={cn(
+                      "relative flex items-center justify-center text-black",
+                    )}
+                  >
+                    <Pentagon
+                      className="h-16 w-16"
+                      fill={PuzzleColorToHex[PuzzleColors[step.face]]}
+                      strokeWidth={1}
+                    ></Pentagon>
+                    {step.direction === CLOCKWISE ? (
+                      <RotateCw className="absolute h-8 w-8" />
+                    ) : (
+                      <RotateCcw className="absolute h-8 w-8" />
+                    )}
+                  </div>
+                  {step.times === 2 && (
+                    <>
+                      <X />
+                      <div className="w-16 text-center text-5xl">2</div>
+                    </>
                   )}
                 </div>
-                {step.times === 2 && (
-                  <>
-                    <X />
-                    <div className="w-16 text-center text-5xl">2</div>
-                  </>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
