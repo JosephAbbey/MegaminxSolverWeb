@@ -39,11 +39,12 @@ import {
   RotateCw,
   X,
 } from "lucide-react"
+import { Mode } from "~/types/Layouts"
 
 export default function Home() {
   const puzzle = usePuzzle(Puzzle.SolvedPuzzle())
 
-  const [isEditing, setIsEditing] = useState(false)
+  const [mode, setMode] = useState<Mode>(Mode.SOLVE)
   const [paintColor, setPaintColor] = useState<PuzzleColor>(PuzzleColor.WHITE)
   const [isInvalid, setIsInvalid] = useState(false)
 
@@ -141,9 +142,9 @@ export default function Home() {
   return (
     <div className="flex h-dvh">
       {/* Canvas Section (Left/top) */}
-      <div className="shadow-background fixed h-1/2 w-full shadow-lg md:mr-(--container-xl) md:h-full md:w-[-webkit-fill-available] md:shadow-none">
+      <div className="shadow-background fixed h-1/2 w-full shadow-lg md:mr-(--container-xl) md:h-full md:w-[calc(100%-min(50%,var(--container-xl))))] md:shadow-none">
         <Scene />
-        <div className="absolute top-0 right-0 m-4">
+        <div className="absolute top-0 right-0 m-4 transition-all">
           {/* Editing Toggle */}
           <Button
             variant="outline"
@@ -151,18 +152,18 @@ export default function Home() {
             type="button"
             role="link"
             onMouseDown={() => {
-              if (isEditing) {
-                setIsEditing(false)
+              if (mode === Mode.PAINT) {
+                setMode(Mode.SOLVE)
                 setIsInvalid(false)
                 solve() // Recalculate steps when exiting edit mode
               } else {
-                setIsEditing(true)
+                setMode(Mode.PAINT)
               }
             }}
             disabled={turn !== null}
             className="cursor-pointer"
           >
-            {isEditing ? (
+            {mode === Mode.PAINT ? (
               <Check aria-label="Done" />
             ) : (
               <Paintbrush aria-label="Paint" />
@@ -171,40 +172,36 @@ export default function Home() {
         </div>
 
         {/* Solution Controls */}
-        {!isEditing && (
-          <>
-            <div className="absolute bottom-0 left-0 m-4">
-              <Button
-                variant="outline"
-                size="icon"
-                type="button"
-                role="button"
-                onMouseDown={backward}
-                disabled={turn !== null || currentStep <= -1}
-                className={cn("cursor-not-allowed", {
-                  "cursor-pointer": currentStep !== -1,
-                })}
-              >
-                <ChevronLeft aria-label="Back" />
-              </Button>
-            </div>
-            <div className="absolute right-0 bottom-0 m-4">
-              <Button
-                variant="outline"
-                size="icon"
-                type="button"
-                role="button"
-                onMouseDown={forward}
-                disabled={turn !== null || currentStep >= steps.length - 1}
-                className={cn("cursor-not-allowed", {
-                  "cursor-pointer": currentStep !== steps.length - 1,
-                })}
-              >
-                <ChevronRight aria-label="Forward" />
-              </Button>
-            </div>
-          </>
-        )}
+        <div className="absolute bottom-0 left-0 m-4">
+          <Button
+            variant="outline"
+            size="icon"
+            type="button"
+            role="button"
+            onMouseDown={backward}
+            disabled={turn !== null || currentStep <= -1}
+            className={cn("cursor-not-allowed", {
+              "cursor-pointer": currentStep !== -1,
+            })}
+          >
+            <ChevronLeft aria-label="Back" />
+          </Button>
+        </div>
+        <div className="absolute right-0 bottom-0 m-4">
+          <Button
+            variant="outline"
+            size="icon"
+            type="button"
+            role="button"
+            onMouseDown={forward}
+            disabled={turn !== null || currentStep >= steps.length - 1}
+            className={cn("cursor-not-allowed", {
+              "cursor-pointer": currentStep !== steps.length - 1,
+            })}
+          >
+            <ChevronRight aria-label="Forward" />
+          </Button>
+        </div>
       </div>
 
       {/* 3D */}
@@ -212,7 +209,7 @@ export default function Home() {
         <Common />
         <StaticPuzzle
           onPointerDown={(face, edge, isCorner) => {
-            if (isEditing && edge !== null && edge !== undefined) {
+            if (mode === Mode.PAINT && edge !== null && edge !== undefined) {
               puzzle.setPieceColor(paintColor, face, edge, isCorner)
             }
           }}
@@ -229,7 +226,7 @@ export default function Home() {
       </AddToScene>
 
       {/* Color Picker (Bottom right) */}
-      {isEditing && (
+      {mode === Mode.PAINT && (
         <div className="mt-auto ml-0 h-1/2 w-full p-4 md:mt-0 md:ml-auto md:h-full md:w-1/2 md:max-w-xl">
           <div
             role="radiogroup"
@@ -257,7 +254,7 @@ export default function Home() {
       )}
 
       {/* Steps Section (Right/bottom) */}
-      {!isEditing && (
+      {mode === Mode.SOLVE && (
         <div
           role="radiogroup"
           className="mt-auto ml-0 flex h-1/2 w-full flex-col gap-4 overflow-y-scroll p-4 md:mt-0 md:ml-auto md:h-full md:w-1/2 md:max-w-xl"

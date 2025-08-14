@@ -1,42 +1,45 @@
 import assert from "assert"
+import { Brand } from "~/types/Utils"
 
 export const PuzzleColor = {
-  WHITE: "WHITE",
-  RED: "RED",
-  BLUE: "BLUE",
-  YELLOW: "YELLOW",
-  PURPLE: "PURPLE",
-  GREEN: "GREEN",
-  PINK: "PINK",
-  LIME: "LIME",
-  ORANGE: "ORANGE",
-  LIGHTBLUE: "LIGHTBLUE",
-  BEIGE: "BEIGE",
-  GREY: "GREY",
+  WHITE: 0 as Brand<0, "PuzzleColor">,
+  RED: 1 as Brand<1, "PuzzleColor">,
+  BLUE: 2 as Brand<2, "PuzzleColor">,
+  YELLOW: 3 as Brand<3, "PuzzleColor">,
+  PURPLE: 4 as Brand<4, "PuzzleColor">,
+  GREEN: 5 as Brand<5, "PuzzleColor">,
+  PINK: 6 as Brand<6, "PuzzleColor">,
+  LIME: 7 as Brand<7, "PuzzleColor">,
+  ORANGE: 8 as Brand<8, "PuzzleColor">,
+  LIGHTBLUE: 9 as Brand<9, "PuzzleColor">,
+  BEIGE: 10 as Brand<10, "PuzzleColor">,
+  GREY: 11 as Brand<11, "PuzzleColor">,
 } as const
 
 export type PuzzleColor = (typeof PuzzleColor)[keyof typeof PuzzleColor] & {}
 
 export const PuzzleColors = Object.values(PuzzleColor) as PuzzleColor[]
 
-export const PuzzleColorToHex: Record<PuzzleColor, string> = {
-  WHITE: "#FFFFFF",
-  RED: "#FF0000",
-  BLUE: "#0000FF",
-  YELLOW: "#FFFF00",
-  PURPLE: "#A200FF",
-  GREEN: "#008000",
-  PINK: "#FF57CA",
-  LIME: "#00FF00",
-  ORANGE: "#FFA500",
-  LIGHTBLUE: "#59B2FF",
-  BEIGE: "#FFDF9E",
-  GREY: "#808080",
-}
+export const PuzzleColorToHex = {
+  [PuzzleColor.WHITE]: "#FFFFFF",
+  [PuzzleColor.RED]: "#FF0000",
+  [PuzzleColor.BLUE]: "#0000FF",
+  [PuzzleColor.YELLOW]: "#FFFF00",
+  [PuzzleColor.PURPLE]: "#A200FF",
+  [PuzzleColor.GREEN]: "#008000",
+  [PuzzleColor.PINK]: "#FF57CA",
+  [PuzzleColor.LIME]: "#00FF00",
+  [PuzzleColor.ORANGE]: "#FFA500",
+  [PuzzleColor.LIGHTBLUE]: "#59B2FF",
+  [PuzzleColor.BEIGE]: "#FFDF9E",
+  [PuzzleColor.GREY]: "#808080",
+} as const
 
 /**
  * Adjacency matrix for edges that are adjacent to each face in clockwise
  * order, with the first edge being adjacent to the face's 0 edge.
+ *
+ * Used to find attached edges and corners, and neighbouring faces.
  */
 const AdjacentEdges: [number, number][][] = [
   [
@@ -225,6 +228,8 @@ export class Puzzle {
    * @protected
    * Finds the edge with the given primary and secondary colors.
    * Returns the face index and edge index of the primary and secondary if found, otherwise undefined.
+   *
+   * Essentially implements a linear search with early exit.
    */
   protected findEdge(
     primary: PuzzleColor,
@@ -255,6 +260,8 @@ export class Puzzle {
    * @protected
    * Find the corner with the given primary, secondary, and tertiary colors (in any orientation).
    * Returns the face index and corner index if found, otherwise undefined.
+   *
+   * Essentially implements a linear search with early exit.
    */
   protected findCorner(
     primary: PuzzleColor,
@@ -1425,7 +1432,7 @@ export class Puzzle {
 
   scramble(): this {
     const randomTurn = () => ({
-      face: Math.floor(Math.random() * this.faces.length),
+      face: Math.floor(Math.random() * 12),
       direction: Math.random() < 0.5 ? ANTICLOCKWISE : CLOCKWISE,
     })
 
@@ -1569,8 +1576,7 @@ export function reverse(turn: Turn): Turn {
   }
 }
 
-const AnticlockwiseSymbol = Symbol("anticlockwise")
-export type Anticlockwise = boolean & { [AnticlockwiseSymbol]: "anticlockwise" }
+export type Anticlockwise = Brand<boolean, "Anticlockwise">
 
 export const ANTICLOCKWISE: Anticlockwise = true as Anticlockwise
 export const CLOCKWISE: Anticlockwise = false as Anticlockwise
