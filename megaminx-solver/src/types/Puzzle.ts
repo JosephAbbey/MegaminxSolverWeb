@@ -2,6 +2,7 @@ import assert from "assert"
 import { Brand } from "~/types/Utils"
 
 export const PuzzleColor = {
+  TRANSPARENT: -1 as Brand<-1, "PuzzleColor">,
   WHITE: 0 as Brand<0, "PuzzleColor">,
   RED: 1 as Brand<1, "PuzzleColor">,
   BLUE: 2 as Brand<2, "PuzzleColor">,
@@ -18,9 +19,15 @@ export const PuzzleColor = {
 
 export type PuzzleColor = (typeof PuzzleColor)[keyof typeof PuzzleColor] & {}
 
+export type KnownPuzzleColor = Exclude<
+  PuzzleColor,
+  typeof PuzzleColor.TRANSPARENT
+>
+
 export const PuzzleColors = Object.values(PuzzleColor) as PuzzleColor[]
 
 export const PuzzleColorToHex = {
+  [PuzzleColor.TRANSPARENT]: "#00000000",
   [PuzzleColor.WHITE]: "#FFFFFF",
   [PuzzleColor.RED]: "#FF0000",
   [PuzzleColor.BLUE]: "#0000FF",
@@ -262,12 +269,16 @@ export class Puzzle {
    * Returns the face index and corner index if found, otherwise undefined.
    *
    * Essentially implements a linear search with early exit.
+   *
+   * Could be optimised by iterating through every corner once and storing the locations in a
+   * structure, to find all corners in a single pass.
    */
   protected findCorner(
     primary: PuzzleColor,
     secondary: PuzzleColor,
     tertiary: PuzzleColor,
   ): [[number, number], [number, number], [number, number]] | undefined {
+    // Reduces number of modulo operations
     const pairs = [
       [4, 0],
       [0, 1],
@@ -1211,6 +1222,215 @@ export class Puzzle {
 
   getTrackingPuzzle(): TrackingPuzzle {
     return new TrackingPuzzle(this)
+  }
+
+  static UnknownPuzzle(): Puzzle {
+    return new Puzzle([
+      new PuzzleFace(
+        PuzzleColor.TRANSPARENT,
+        [
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+        ],
+        [
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+        ],
+      ),
+      new PuzzleFace(
+        PuzzleColor.TRANSPARENT,
+        [
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+        ],
+        [
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+        ],
+      ),
+      new PuzzleFace(
+        PuzzleColor.TRANSPARENT,
+        [
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+        ],
+        [
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+        ],
+      ),
+      new PuzzleFace(
+        PuzzleColor.TRANSPARENT,
+        [
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+        ],
+        [
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+        ],
+      ),
+      new PuzzleFace(
+        PuzzleColor.TRANSPARENT,
+        [
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+        ],
+        [
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+        ],
+      ),
+      new PuzzleFace(
+        PuzzleColor.TRANSPARENT,
+        [
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+        ],
+        [
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+        ],
+      ),
+      new PuzzleFace(
+        PuzzleColor.TRANSPARENT,
+        [
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+        ],
+        [
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+        ],
+      ),
+      new PuzzleFace(
+        PuzzleColor.TRANSPARENT,
+        [
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+        ],
+        [
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+        ],
+      ),
+      new PuzzleFace(
+        PuzzleColor.TRANSPARENT,
+        [
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+        ],
+        [
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+        ],
+      ),
+      new PuzzleFace(
+        PuzzleColor.TRANSPARENT,
+        [
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+        ],
+        [
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+        ],
+      ),
+      new PuzzleFace(
+        PuzzleColor.TRANSPARENT,
+        [
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+        ],
+        [
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+        ],
+      ),
+      new PuzzleFace(
+        PuzzleColor.TRANSPARENT,
+        [
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+        ],
+        [
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+          PuzzleColor.TRANSPARENT,
+        ],
+      ),
+    ])
   }
 
   static SolvedPuzzle(): Puzzle {
