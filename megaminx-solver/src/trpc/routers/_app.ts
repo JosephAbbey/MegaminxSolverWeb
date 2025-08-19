@@ -1,10 +1,10 @@
-import { z } from "zod"
+import { type } from "arktype"
 import { baseProcedure, createTRPCRouter } from "~/trpc/init"
 export const appRouter = createTRPCRouter({
   hello: baseProcedure
     .input(
-      z.object({
-        text: z.string(),
+      type({
+        text: "string",
       }),
     )
     .query((opts) => {
