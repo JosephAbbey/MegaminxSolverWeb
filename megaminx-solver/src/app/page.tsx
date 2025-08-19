@@ -16,7 +16,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
 import { cn } from "~/lib/utils"
 import { useRef, useState } from "react"
-import usePuzzle from "~/components/hooks/usePuzzle"
+import usePuzzle from "~/hooks/usePuzzle"
 import {
   DEBUG,
   EdgedFace,
@@ -28,8 +28,9 @@ import {
 import { Group } from "three"
 import { invalidate } from "@react-three/fiber"
 import { Button } from "~/components/ui/button"
-import { useKeyPress } from "~/components/hooks/useKeyPress"
+import { useKeyPress } from "~/hooks/useKeyPress"
 import {
+  CameraIcon,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -40,6 +41,7 @@ import {
   X,
 } from "lucide-react"
 import { Mode } from "~/types/Layouts"
+import Camera from "~/components/utils/Camera"
 
 export default function Home() {
   const puzzle = usePuzzle(Puzzle.SolvedPuzzle())
@@ -144,8 +146,8 @@ export default function Home() {
       {/* Canvas Section (Left/top) */}
       <div className="shadow-background fixed h-1/2 w-full shadow-lg md:mr-(--container-xl) md:h-full md:w-[calc(100%-min(50%,var(--container-xl))))] md:shadow-none">
         <Scene />
-        <div className="absolute top-0 right-0 m-4 transition-all">
-          {/* Editing Toggle */}
+        <div className="absolute top-0 right-0 m-4 flex gap-2 transition-all">
+          {/* Painting Toggle */}
           <Button
             variant="outline"
             size="icon"
@@ -155,7 +157,7 @@ export default function Home() {
               if (mode === Mode.PAINT) {
                 setMode(Mode.SOLVE)
                 setIsInvalid(false)
-                solve() // Recalculate steps when exiting edit mode
+                solve() // Recalculate steps when exiting paint mode
               } else {
                 setMode(Mode.PAINT)
               }
@@ -167,6 +169,31 @@ export default function Home() {
               <Check aria-label="Done" />
             ) : (
               <Paintbrush aria-label="Paint" />
+            )}
+          </Button>
+
+          {/* Scanning Toggle */}
+          <Button
+            variant="outline"
+            size="icon"
+            type="button"
+            role="link"
+            onMouseDown={() => {
+              if (mode === Mode.SCAN) {
+                setMode(Mode.SOLVE)
+                setIsInvalid(false)
+                solve() // Recalculate steps when exiting scan mode
+              } else {
+                setMode(Mode.SCAN)
+              }
+            }}
+            disabled={turn !== null}
+            className="cursor-pointer"
+          >
+            {mode === Mode.SCAN ? (
+              <Check aria-label="Done" />
+            ) : (
+              <CameraIcon aria-label="Scan" />
             )}
           </Button>
         </div>
@@ -225,7 +252,7 @@ export default function Home() {
         </group>
       </AddToScene>
 
-      {/* Color Picker (Bottom right) */}
+      {/* Color Picker (Right/bottom) */}
       {mode === Mode.PAINT && (
         <div className="mt-auto ml-0 h-1/2 w-full p-4 md:mt-0 md:ml-auto md:h-full md:w-1/2 md:max-w-xl">
           <div
@@ -250,6 +277,13 @@ export default function Home() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Camera (Right/bottom) */}
+      {mode === Mode.SCAN && (
+        <div className="mt-auto ml-0 h-1/2 w-full p-4 md:mt-0 md:ml-auto md:h-full md:w-1/2 md:max-w-xl">
+          <Camera className="h-full w-full object-cover" />
         </div>
       )}
 
