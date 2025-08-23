@@ -1,0 +1,7 @@
+{
+  // "jest.jestCommandLine": "npm run test --"
+  "jest.enable": false,
+  "coverage-gutters.showGutterCoverage": true,
+  "coverage-gutters.showLineCoverage": false,
+  "coverage-gutters.showRulerCoverage": true
+}
