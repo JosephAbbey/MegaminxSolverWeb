@@ -3,7 +3,7 @@
 export const DEBUG = false
 
 import { ComponentProps, ReactNode, RefObject, useMemo } from "react"
-import { Group, Plane, Shape, ShapeGeometry, Vector3 } from "three"
+import { ExtrudeGeometry, Group, Plane, Shape, Vector3 } from "three"
 import {
   PuzzleEdgedFace,
   Puzzle,
@@ -12,11 +12,14 @@ import {
   PuzzleFace,
   Turn,
   ANTICLOCKWISE,
+  Anticlockwise,
 } from "~/types/Puzzle"
 import { Text } from "@react-three/drei"
 import { Clip, ClippingStandardMaterial } from "~/components/fiber/Clipping"
 import { Easing, Tween } from "@tweenjs/tween.js"
 import { group } from "~/components/fiber/TweenGroup"
+import { ShapeGeometry } from "three"
+import { useTheme } from "next-themes"
 
 function TriangleShape() {
   const shape = new Shape()
@@ -27,6 +30,8 @@ function TriangleShape() {
   return shape
 }
 
+const triangleGeometry = new ShapeGeometry([TriangleShape()])
+
 function Triangle({
   index,
   color,
@@ -35,11 +40,6 @@ function Triangle({
   index?: number
   color: PuzzleColor
 } & ComponentProps<"mesh">) {
-  const triangleGeometry = useMemo(
-    () => new ShapeGeometry([TriangleShape()]),
-    [],
-  )
-
   return (
     <mesh geometry={triangleGeometry} {...props}>
       {DEBUG && (
@@ -63,6 +63,8 @@ function QuadrilateralShape() {
   return shape
 }
 
+const quadrilateralGeometry = new ShapeGeometry([QuadrilateralShape()])
+
 function Quadrilateral({
   index,
   color,
@@ -71,11 +73,6 @@ function Quadrilateral({
   index?: number
   color: PuzzleColor
 } & ComponentProps<"mesh">) {
-  const quadrilateralGeometry = useMemo(
-    () => new ShapeGeometry([QuadrilateralShape()]),
-    [],
-  )
-
   return (
     <mesh geometry={quadrilateralGeometry} {...props}>
       {DEBUG && (
@@ -105,21 +102,160 @@ function PentagonShape() {
   return shape
 }
 
+const pentagonGeometry = new ShapeGeometry([PentagonShape()])
+
 function Pentagon({
   color,
   ...props
 }: {
   color: PuzzleColor
 } & ComponentProps<"mesh">) {
-  const pentagonGeometry = useMemo(
-    () => new ShapeGeometry([PentagonShape()]),
-    [],
-  )
-
   return (
     <mesh geometry={pentagonGeometry} {...props}>
       <ClippingStandardMaterial color={PuzzleColorToHex[color]} />
     </mesh>
+  )
+}
+
+// const ARROW_THICKNESS = 0.2
+// const HALF_ARROW_THICKNESS = ARROW_THICKNESS / 2
+// const ARROW_THICKNESS_45 = ARROW_THICKNESS * Math.SQRT1_2
+
+function AnticlockwiseArrowShape() {
+  const shape = new Shape()
+  // shape.moveTo(HALF_ARROW_THICKNESS, -1)
+  // shape.lineTo(HALF_ARROW_THICKNESS, 1)
+  // shape.lineTo(0.4 + HALF_ARROW_THICKNESS, 0.6 + HALF_ARROW_THICKNESS)
+  // // shape.lineTo(
+  // //   0.4 + HALF_ARROW_THICKNESS + ARROW_THICKNESS_45,
+  // //   0.6 + HALF_ARROW_THICKNESS + ARROW_THICKNESS_45,
+  // // )
+  // shape.lineTo(0, 1 + 4 * ARROW_THICKNESS)
+  // // shape.lineTo(
+  // //   0,
+  // //   1 + 2 * ARROW_THICKNESS_45 + HALF_ARROW_THICKNESS + 2 * ARROW_THICKNESS,
+  // // )
+  // // shape.lineTo(
+  // //   -0.4 - HALF_ARROW_THICKNESS - ARROW_THICKNESS_45,
+  // //   0.6 + HALF_ARROW_THICKNESS + ARROW_THICKNESS_45,
+  // // )
+  // shape.lineTo(-0.4 - HALF_ARROW_THICKNESS, 0.6 + HALF_ARROW_THICKNESS)
+  // shape.lineTo(-HALF_ARROW_THICKNESS, 1)
+  // shape.lineTo(-HALF_ARROW_THICKNESS, -1)
+  // shape.lineTo(HALF_ARROW_THICKNESS, -1)
+  shape.moveTo(0.1, -1.8)
+  shape.lineTo(0.1, 1)
+  shape.lineTo(0.5, 0.7)
+  shape.lineTo(0, 1.8)
+  shape.lineTo(-0.5, 0.7)
+  shape.lineTo(-0.1, 1)
+  shape.lineTo(-0.1, -1.8)
+  shape.lineTo(0.1, -1.8)
+  return shape
+}
+
+const anticlockwiseArrowGeometry = new ExtrudeGeometry(
+  [AnticlockwiseArrowShape()],
+  {
+    bevelEnabled: false,
+    // depth: ARROW_THICKNESS,
+    depth: 0.2,
+  },
+)
+
+function ClockwiseArrowShape() {
+  const shape = new Shape()
+  shape.moveTo(0.1, 1.8)
+  shape.lineTo(0.1, -1)
+  shape.lineTo(0.5, -0.7)
+  shape.lineTo(0, -1.8)
+  shape.lineTo(-0.5, -0.7)
+  shape.lineTo(-0.1, -1)
+  shape.lineTo(-0.1, 1.8)
+  shape.lineTo(0.1, 1.8)
+  return shape
+}
+
+const clockwiseArrowGeometry = new ExtrudeGeometry([ClockwiseArrowShape()], {
+  bevelEnabled: false,
+  depth: 0.2,
+})
+
+function Arrow({
+  direction,
+  ...props
+}: {
+  direction: Anticlockwise
+} & ComponentProps<"mesh">) {
+  const { systemTheme: theme } = useTheme()
+  return (
+    <mesh
+      geometry={direction ? anticlockwiseArrowGeometry : clockwiseArrowGeometry}
+      {...props}
+    >
+      <meshStandardMaterial color={theme == "dark" ? "#fff" : "#000"} />
+    </mesh>
+  )
+}
+
+function AnticlockwiseArcArrowShape() {
+  const shape = new Shape()
+  shape.absarc(0, 0, 2, 0, (1 / 2) * Math.PI, true)
+  shape.absarc(0, 0, 1.8, (1 / 2) * Math.PI, 0, false)
+  shape.lineTo(1.8, -0)
+  shape.lineTo(1.4, -0.3)
+  shape.lineTo(1.9, 0.8)
+  shape.lineTo(2.4, -0.3)
+  shape.lineTo(2, -0)
+  return shape
+}
+
+const anticlockwiseArcArrowGeometry = new ExtrudeGeometry(
+  [AnticlockwiseArcArrowShape()],
+  {
+    bevelEnabled: false,
+    depth: 0.2,
+  },
+)
+
+function ClockwiseArcArrowShape() {
+  const shape = new Shape()
+  shape.absarc(0, 0, 2, 0, (3 / 2) * Math.PI, false)
+  shape.absarc(0, 0, 1.8, (3 / 2) * Math.PI, 0, true)
+  shape.lineTo(1.8, 0)
+  shape.lineTo(1.4, 0.3)
+  shape.lineTo(1.9, -0.8)
+  shape.lineTo(2.4, 0.3)
+  shape.lineTo(2, 0)
+  return shape
+}
+
+const clockwiseArcArrowGeometry = new ExtrudeGeometry(
+  [ClockwiseArcArrowShape()],
+  {
+    bevelEnabled: false,
+    depth: 0.2,
+  },
+)
+
+function ArcArrow({
+  direction,
+  ...props
+}: {
+  direction: Anticlockwise
+} & ComponentProps<"mesh">) {
+  const { systemTheme: theme } = useTheme()
+  return (
+    <>
+      <mesh
+        geometry={
+          direction ? anticlockwiseArcArrowGeometry : clockwiseArcArrowGeometry
+        }
+        {...props}
+      >
+        <meshStandardMaterial color={theme == "dark" ? "#fff" : "#000"} />
+      </mesh>
+    </>
   )
 }
 
@@ -271,17 +407,37 @@ export function StaticPuzzle({
   )
 }
 
-export function EdgedFace({ face }: { face: PuzzleEdgedFace }) {
+export function EdgedFace({
+  face,
+  arrowDirection,
+}: {
+  face: PuzzleEdgedFace
+  arrowDirection?: Anticlockwise
+}) {
   return (
     <>
       <group position={[0, 0, 4.6]} rotation={[0, 0, (4 * Math.PI) / 5]}>
         <Face face={face.face} />
+        {arrowDirection !== undefined && (
+          <ArcArrow direction={arrowDirection} />
+        )}
       </group>
       {face.edges.map((edge, i) => (
         <group key={i} rotation={[0, 0, ((i * 4 - 1) * Math.PI) / 10]}>
           <group rotation={[0, (7 / 20) * Math.PI, 0]}>
             <group rotation={[0, 0, -Math.PI / 10]}>
               <group position={[0, 0, r]}>
+                {arrowDirection !== undefined && (
+                  <Arrow
+                    direction={arrowDirection}
+                    rotation={[0, 0, (1 / 10) * Math.PI]}
+                    position={[
+                      1.7 * Math.cos((11 / 10) * Math.PI),
+                      1.7 * Math.sin((11 / 10) * Math.PI),
+                      0,
+                    ]}
+                  />
+                )}
                 <Quadrilateral
                   color={edge[0]}
                   rotation={[0, 0, (12 / 10) * Math.PI]}

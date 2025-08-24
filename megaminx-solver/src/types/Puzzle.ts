@@ -56,6 +56,22 @@ export const PuzzleColorToHex = {
   [PuzzleColor.GREY]: "#808080",
 } as const
 
+export const PuzzleColorToString = {
+  [PuzzleColor.TRANSPARENT]: "TRANSPARENT",
+  [PuzzleColor.WHITE]: "WHITE",
+  [PuzzleColor.RED]: "RED",
+  [PuzzleColor.BLUE]: "BLUE",
+  [PuzzleColor.YELLOW]: "YELLOW",
+  [PuzzleColor.PURPLE]: "PURPLE",
+  [PuzzleColor.GREEN]: "GREEN",
+  [PuzzleColor.PINK]: "PINK",
+  [PuzzleColor.LIME]: "LIME",
+  [PuzzleColor.ORANGE]: "ORANGE",
+  [PuzzleColor.LIGHTBLUE]: "LIGHTBLUE",
+  [PuzzleColor.BEIGE]: "BEIGE",
+  [PuzzleColor.GREY]: "GREY",
+} as const
+
 /**
  * Adjacency matrix for edges that are adjacent to each face in clockwise
  * order, with the first edge being adjacent to the face's 0 edge.

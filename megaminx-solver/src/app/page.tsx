@@ -9,6 +9,7 @@ import {
   PuzzleColor,
   PuzzleColors,
   PuzzleColorToHex,
+  PuzzleColorToString,
   PuzzleEdgedFace,
   reverse,
   Turn,
@@ -246,7 +247,12 @@ export default function Home() {
         <group visible={turn !== null}>
           <RotateFace index={turn?.face ?? -1}>
             <Turning turningRef={turningRef}>
-              {animateFace && <EdgedFace face={animateFace} />}
+              {animateFace && (
+                <EdgedFace
+                  face={animateFace}
+                  arrowDirection={turn?.direction}
+                />
+              )}
             </Turning>
           </RotateFace>
         </group>
@@ -338,7 +344,7 @@ export default function Home() {
             >
               <CardHeader>
                 <CardTitle>
-                  {index + 1}. Turn {PuzzleColors[step.face]} {step.face} face{" "}
+                  {index + 1}. Turn {PuzzleColorToString[step.face]} face{" "}
                   {step.direction == ANTICLOCKWISE
                     ? "ANTICLOCKWISE"
                     : "CLOCKWISE"}{" "}
